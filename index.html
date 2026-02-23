@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViralScope - Ultimate Fixed</title>
+    <link rel="stylesheet" href="css/style-main.css">
+
+</head>
+<body>
+
+    <nav>
+        <div class="nav-left">
+            <a href="#" class="logo" onclick="loadCategory('trending'); return false;">⚡ ViralScope</a>
+        </div>
+        <div class="nav-right">
+            <button class="theme-btn" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
+            <div class="hamburger" onclick="toggleMenu()">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dropdown-menu" id="dropdownMenu">
+        <a class="menu-item" onclick="loadCategory('trending'); toggleMenu()">Home <span>🏠</span></a>
+        <a class="menu-item" onclick="alert('AI Generator Coming Soon!'); toggleMenu()">AI Generator <span>🤖</span></a>
+        <a class="menu-item" href="https://google.com" target="_blank" onclick="toggleMenu()">External Links <span>🔗</span></a>
+        <a class="menu-item" onclick="showFavorites(); toggleMenu()">Favorites <span>❤️</span></a>
+        <div style="padding: 15px 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="color:var(--text); font-weight:600;">Language</span>
+            <select id="langSelect" style="background:var(--chip-bg); color:var(--text); border:1px solid var(--border); padding:5px 10px; border-radius:15px; outline:none;" onchange="changeLanguage()">
+                <option value="en">🇺🇸 EN</option>
+                <option value="id">🇮🇩 ID</option>
+                <option value="es">🇪🇸 ES</option>
+                <option value="jp">🇯🇵 JP</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="homeView" class="container">
+        <!-- Filters: Max-width sama dengan search bar -->
+        <div class="filters">
+            <div class="chip active" onclick="loadCategory('trending')" id="chip-trending">🔥 Viral Now</div>
+            <div class="chip" onclick="loadCategory('funny')" id="chip-funny">🐱 Funny</div>
+            <div class="chip" onclick="loadCategory('ai')" id="chip-ai">🤖 AI</div>
+            <div class="chip" onclick="loadCategory('gaming')" id="chip-gaming">🎮 Gaming</div>
+            <div class="chip" onclick="loadCategory('music')" id="chip-music">🎵 Music</div>
+        </div>
+
+        <div class="search-box-container">
+            <div class="search-wrapper">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search viral videos..." onkeypress="if(event.key==='Enter') performSearch()">
+                <button class="search-btn" onclick="performSearch()">🔍</button>
+            </div>
+        </div>
+
+        <div id="errorMsg" class="error-msg"></div>
+        <div id="loadingState" class="loading-state" style="display:none;">
+            <span class="spinner"></span> <span id="txt-loading">Loading viral videos...</span>
+        </div>
+        
+        <div class="video-grid" id="videoGrid"></div>
+        
+        <div class="load-more-container">
+            <button id="loadMoreBtn" class="load-more-btn" onclick="loadMoreVideos()" style="display:none;">Load More Viral Videos</button>
+        </div>
+    </div>
+
+    <div id="favoritesView">
+        <div class="fav-header">
+            <h2 id="txt-fav-title">My Saved Videos ❤️</h2>
+            <button class="close-fav" onclick="showHome()">← Back</button>
+        </div>
+        <div class="video-grid" id="favGrid"></div>
+        <div id="emptyFavMsg" style="text-align:center; color:var(--text-sec); margin-top:50px; display:none;">No saved videos yet.</div>
+    </div>
+
+    <div class="modal" id="videoModal">
+        <div class="modal-content">
+            <iframe id="youtubePlayer" src="" allowfullscreen></iframe>
+        </div>
+        <div class="modal-controls">
+            <button class="modal-btn" onclick="shareVideoFromModal()" title="Share">📤</button>
+            <button class="modal-btn close" onclick="closeModal()" id="txt-btn-close">✕</button>
+            <button class="modal-btn" onclick="toggleFavoriteFromModal()" id="modalFavBtn" title="Save">🤍</button>
+        </div>
+    </div>
+
+    <button id="backToTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</button>
+    <div id="toast">✅ Link copied to clipboard!</div>
+<script src="js/script-main.js"></script>
+    
+</body>
+</html>
