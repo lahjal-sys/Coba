@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Studio - ViralScope</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style-main.css">
+</head>
+<body>
+    <nav>
+        <div class="nav-left"><a href="index.html" class="logo">⚡ ViralScope</a></div>
+        <div class="nav-right">
+            <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+            <div class="hamburger" onclick="toggleMenu()"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+        </div>
+    </nav>
+    <div class="dropdown-menu" id="dropdownMenu">
+        <a class="menu-item" href="index.html" onclick="toggleMenu()">Home 🏠</a>
+        <a class="menu-item" href="ai-generator.html" onclick="toggleMenu()" style="color:var(--primary)">AI Studio 🤖</a>
+        <a class="menu-item" href="https://runwayml.com" target="_blank" onclick="toggleMenu()">Video AI 🎥</a>
+        <div style="padding:15px 10px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;">
+            <span style="color:var(--text); font-weight:600;">Language</span>
+            <select id="langSelect" class="lang-select" onchange="changeLanguage()">
+                <option value="en">🇺🇸 EN</option><option value="id">🇮🇩 ID</option><option value="es">🇪🇸 ES</option><option value="jp">🇯🇵 JP</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('image')">🎨 Image</button>
+            <button class="tab-btn" onclick="switchTab('chat')">💬 Chat</button>
+        </div>
+
+        <!-- IMAGE TAB -->
+        <div id="tab-image" class="tab-content active">
+            <h1>AI Image Generator</h1>
+            <p class="subtitle">Powered by Stable Diffusion XL</p>
+            <textarea id="imgPrompt" class="prompt-area" placeholder="A cyberpunk cat..."></textarea>
+            <div class="tools-row">
+                <button class="random-btn" onclick="fillRandomPrompt()">🎲 Random</button>
+                <div style="display:flex; gap:5px;">
+                    <button class="ratio-btn active" onclick="setRatio(1024,1024,this)">1:1</button>
+                    <button class="ratio-btn" onclick="setRatio(768,1344,this)">9:16</button>
+                    <button class="ratio-btn" onclick="setRatio(1344,768,this)">16:9</button>
+                </div>
+            </div>
+            <button class="action-btn-main" id="genImgBtn" onclick="generateImage()">✨ Generate</button>
+            
+            <div class="result-area">
+                <div id="imgPlaceholder" class="placeholder-box">Art will appear here</div>
+                <div class="loader" id="imgLoader"></div>
+                <div class="image-container" id="imgContainer"><img id="generatedImage" src=""></div>
+                <div class="action-buttons" id="imgActions">
+                    <button class="btn-small" onclick="downloadImage()">Download</button>
+                    <button class="btn-small" onclick="shareImage()">Share</button>
+                </div>
+            </div>
+            <div class="gallery-section" id="gallerySection">
+                <div style="color:var(--text-sec); font-weight:600; margin-bottom:10px;">Recent</div>
+                <div class="gallery-grid" id="galleryGrid"></div>
+            </div>
+        </div>
+
+        <!-- CHAT TAB -->
+        <div id="tab-chat" class="tab-content">
+            <h1>AI Chat</h1>
+            <p class="subtitle">Powered by Llama 3</p>
+            <div class="chat-container" id="chatBox"><div class="message ai">Hello! How can I help?</div></div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Type..." onkeypress="if(event.key==='Enter') sendChat()">
+                <button class="send-btn" onclick="sendChat()">➤</button>
+            </div>
+        </div>
+    </div>
+    <div id="toast">✅ Copied!</div>
+
+    <script src="js/script-main.js"></script>
+</body>
+</html>
