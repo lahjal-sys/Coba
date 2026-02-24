@@ -162,6 +162,8 @@ async function sendChat() {
     box.scrollTop = box.scrollHeight;
 
     try {
+                // ... (kode sebelumnya tetap sama sampai baris fetch) ...
+
         const response = await fetch('/api/send-chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -170,17 +172,21 @@ async function sendChat() {
 
         if (!response.ok) {
             const errData = await response.json();
-            throw new Error(errData.message || t.err_chat);
+            throw new Error(errData.message || 'Gagal chat');
         }
 
         const data = await response.json();
-        let reply = "Sorry, I didn't understand.";
         
-        if (data && data[0] && data[0].generated_text) {
-            reply = data[0].generated_text.trim(); 
+        // PERUBAHAN DI SINI: Groq mengembalikan { result: "jawaban" }
+        let reply = "Maaf, saya tidak mengerti.";
+        
+        if (data && data.result) {
+            reply = data.result.trim(); 
         }
 
         document.getElementById(loadingId).innerText = reply;
+
+        // ... (kode selanjutnya tetap sama) ...
 
     } catch(e) {
         console.error(e);
