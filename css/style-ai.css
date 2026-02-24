@@ -99,3 +99,23 @@
 
 /* Language Select */
 .lang-select { background: var(--chip-bg); color: var(--text); border: 1px solid var(--border); padding: 8px 12px; border-radius: 15px; outline: none; font-size: 0.9rem; }
+
+/* --- FIX LOADER YANG MUNCUL DI AWAL --- */
+
+/* Paksa loader AI untuk sembunyi total saat halaman dimuat */
+#imgLoader {
+    display: none !important; /* Tanda !important memaksa browser menyembunyikannya */
+    margin: 20px auto;
+    clear: both; /* Mencegah elemen lain melayang di sebelahnya */
+}
+
+/* Pastikan container hasilnya juga rapi */
+.result-area {
+    position: relative;
+    min-height: 50px; /* Beri ruang agar layout tidak lompat-lompat */
+}
+
+/* Saat loader aktif (ditambah class 'active' oleh JS jika perlu, tapi kita pakai inline style di JS sudah cukup) */
+#imgLoader[style*="inline-block"] {
+    display: inline-block !important;
+}
