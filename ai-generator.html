@@ -54,14 +54,26 @@
             <button class="action-btn-main" id="genImgBtn" onclick="generateImage()">✨ Generate</button>
             
             <div class="result-area">
-                <div id="imgPlaceholder" class="placeholder-box">Art will appear here</div>
-                <div class="loader" id="imgLoader"></div>
-                <div class="image-container" id="imgContainer"><img id="generatedImage" src=""></div>
-                <div class="action-buttons" id="imgActions">
-                    <button class="btn-small" onclick="downloadImage()">Download</button>
-                    <button class="btn-small" onclick="shareImage()">Share</button>
-                </div>
-            </div>
+    <!-- 1. Placeholder (Teks "Art will appear here") -->
+    <div id="imgPlaceholder" class="placeholder-box">
+        <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+        <p>Art will appear here</p>
+    </div>
+
+    <!-- 2. Loader (Harus ada di sini, di antara placeholder dan gambar) -->
+    <div class="loader" id="imgLoader"></div>
+    
+    <!-- 3. Container Gambar (Default display: none) -->
+    <div class="image-container" id="imgContainer">
+        <img id="generatedImage" src="" alt="AI Art">
+    </div>
+
+    <!-- 4. Tombol Aksi -->
+    <div class="action-buttons" id="imgActions">
+        <button class="btn-small" onclick="downloadImage()">Download</button>
+        <button class="btn-small" onclick="shareImage()">Share</button>
+    </div>
+</div>
             <div class="gallery-section" id="gallerySection">
                 <div style="color:var(--text-sec); font-weight:600; margin-bottom:10px;">Recent</div>
                 <div class="gallery-grid" id="galleryGrid"></div>
