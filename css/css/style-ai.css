@@ -1,0 +1,89 @@
+/* --- CSS KHUSUS AI GENERATOR (TAMBAHAN UNTUK STYLE-MAIN.CSS) --- */
+
+/* Tabs System */
+.tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; overflow-x: auto; }
+.tab-btn {
+    background: transparent; border: none; color: var(--text-sec);
+    font-size: 1rem; font-weight: 600; padding: 10px 20px;
+    cursor: pointer; white-space: nowrap; border-radius: 20px;
+    transition: 0.3s; display: flex; align-items: center; gap: 8px;
+}
+.tab-btn.active { background: var(--primary); color: white; }
+.tab-btn:hover:not(.active) { background: var(--chip-bg); color: var(--text); }
+
+/* Input Area (Textarea) */
+.prompt-area {
+    width: 100%;
+    background: var(--input-bg);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 1rem;
+    padding: 15px;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+    transition: 0.3s;
+    min-height: 120px;
+    resize: vertical;
+}
+.prompt-area:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(255, 0, 80, 0.2); }
+
+/* Tools Row & Ratio Buttons */
+.tools-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px; }
+.random-btn, .ratio-btn {
+    background: var(--chip-bg); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 15px; border-radius: 20px;
+    cursor: pointer; font-size: 0.9rem; transition: 0.2s;
+}
+.random-btn:hover { background: var(--secondary); color: #000; border-color: var(--secondary); }
+.ratio-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Main Action Button */
+.action-btn-main {
+    width: 100%; margin-top: 15px;
+    background: linear-gradient(45deg, var(--primary), #d60043);
+    border: none; color: white; padding: 15px;
+    border-radius: 12px; cursor: pointer;
+    font-size: 1.1rem; font-weight: bold;
+    transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.action-btn-main:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 0, 80, 0.4); }
+.action-btn-main:disabled { background: var(--chip-bg); color: var(--text-sec); cursor: not-allowed; transform: none; }
+
+/* Chat Specific */
+.chat-container {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 12px; height: 400px; overflow-y: auto;
+    padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 15px;
+}
+.message { max-width: 80%; padding: 10px 15px; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; }
+.message.user { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+.message.ai { align-self: flex-start; background: var(--chip-bg); color: var(--text); border-bottom-left-radius: 2px; }
+.chat-input-area { display: flex; gap: 10px; }
+.chat-input { flex: 1; background: var(--input-bg); border: 1px solid var(--border); border-radius: 20px; padding: 12px 15px; color: var(--text); outline: none; }
+.send-btn { background: var(--primary); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+
+/* Result & Gallery */
+.result-area { margin-top: 30px; text-align: center; }
+.image-container { width: 100%; border-radius: 12px; overflow: hidden; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--border); margin: 0 auto; max-width: 512px; }
+.image-container img { width: 100%; height: auto; display: block; }
+
+.gallery-section { margin-top: 40px; display: none; }
+.gallery-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; color: var(--text-sec); }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
+.gallery-item { aspect-ratio: 1; border-radius: 8px; overflow: hidden; cursor: pointer; border: 1px solid var(--border); position: relative; }
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
+.gallery-item:hover img { transform: scale(1.1); }
+
+/* Loader & Placeholder */
+.loader { display: inline-block; width: 30px; height: 30px; border: 3px solid var(--chip-bg); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+.placeholder-box { padding: 40px 20px; color: var(--text-sec); background: var(--card-bg); border-radius: 12px; border: 1px dashed var(--border); }
+
+/* Small Action Buttons */
+.action-buttons { margin-top: 15px; display: none; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.btn-small { background: var(--chip-bg); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+.btn-small:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Language Select */
+.lang-select { background: var(--chip-bg); color: var(--text); border: 1px solid var(--border); padding: 8px 12px; border-radius: 15px; outline: none; font-size: 0.9rem; }
