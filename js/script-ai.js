@@ -1,6 +1,3 @@
-const HF_TOKEN = "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";
-// GUNAKAN PROXY ALTERNATIF (AllOrigins) yang seringkali lebih stabil di HP
-const PROXY_BASE = "https://api.allorigins.win/raw?url=";
 
 let currentImgUrl = '';
 let currentLang = 'en';
@@ -63,28 +60,31 @@ async function generateImage() {
     
     btn.disabled = true; placeholder.style.display='none'; container.style.display='none'; actions.style.display='none'; loader.style.display='inline-block';
 
-    // SUSUN URL TARGET (TANPA SPASI)
-    const target = `https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0`;
-    // ENCODE URL TARGET AGAR BISA DILEMPAR KE PROXY
-    const proxyUrl = `${PROXY_BASE}${encodeURIComponent(target)}`;
-
     try {
-        // KIRIM REQUEST KE PROXY
-        const res = await fetch(proxyUrl, {
+        // PERUBAHAN BESAR DI SINI:
+        // Dulu: fetch('https://api.huggingface.co/...', { headers: { Authorization: ... } })
+        // Sekarang: fetch('/api/generate-image', ...) -> Token otomatis dipakai server
+        
+        const response = await fetch('/api/generate-image', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${HF_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ inputs: p, parameters: { width: window.currentW, height: window.currentH } })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                prompt: p, 
+                width: window.currentW, 
+                height: window.currentH 
+            })
         });
 
-        if(!res.ok) throw new Error(`Error ${res.status}`);
+        // Cek jika server mengembalikan error
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.message || 'Gagal generate gambar');
+        }
         
-        const blob = await res.blob();
-        if(blob.size === 0) throw new Error("Empty image");
-
+        // Karena response kita sekarang adalah image blob langsung dari server kita
+        const blob = await response.blob();
         currentImgUrl = URL.createObjectURL(blob);
+        
         const img = document.getElementById('generatedImage');
         img.src = currentImgUrl;
         img.onload = () => {
@@ -94,11 +94,10 @@ async function generateImage() {
     } catch(e) {
         console.error(e);
         loader.style.display='none'; placeholder.style.display='block';
-        placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}. Try WiFi or different network.</span>`;
+        placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}</span>`;
         btn.disabled=false;
     }
 }
-
 async function sendChat() {
     const inp = document.getElementById('chatInput');
     const txt = inp.value.trim();
