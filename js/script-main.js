@@ -1,4 +1,4 @@
-<script>
+
         const API_KEYS = [
             'AIzaSyBGH3y7ZJwEtETVd1hQmwzBlZFmsvKBUJE', 
             'AIzaSyB8jJo5jvlTFSH2pLWSKlmNTnrGu2xojvg', 
@@ -350,4 +350,4 @@
                 document.getElementById('errorMsg').style.display = 'block';
             }
         };
-    </script>
+    
