@@ -1,6 +1,6 @@
 // File: api/generate-image.js
 export default async function handler(req, res) {
-  // Izinkan CORS (agar frontend bisa akses)
+  // Setup CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -21,46 +21,51 @@ export default async function handler(req, res) {
   }
 
   try {
-    // KITA PAKAI ENDPOINT STANDAR YANG MASIH AKTIF UNTUK SERVER-SIDE
-    // Menggunakan model SDXL yang stabil
-    const MODEL_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
+    // FORMAT URL BARU UNTUK ROUTER.HUGGINGFACE.CO
+    // Perhatikan: Tidak ada kata 'models' di tengah jika pakai router spesifik, 
+    // TAPI untuk inference umum, kita pakai format ini:
+    const MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0";
+    const API_URL = `https://router.huggingface.co/hf-inference/models/${MODEL_ID}`;
 
-    const response = await fetch(MODEL_URL, {
+    const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        // Tambahkan User-Agent agar tidak dikira bot jahat
-        'User-Agent': 'ViralScope-AI/1.0' 
+        'User-Agent': 'ViralScope-AI/1.0',
+        // Header tambahan untuk memastikan request diterima
+        'X-HF-Client': 'ViralScope-Vercel' 
       },
       body: JSON.stringify({
         inputs: prompt,
         parameters: { 
             width: width || 1024, 
             height: height || 1024,
-            num_inference_steps: 30 // Kualitas standar
+            num_inference_steps: 25 
         }
       })
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      // Log error detail ke console Vercel (bisa dilihat di dashboard)
-      console.error("HF Error:", response.status, errText);
+      console.error("HF Router Error:", response.status, errText);
       
       if (response.status === 404) {
-          return res.status(404).json({ message: 'Model tidak ditemukan. Coba prompt lain.' });
+          return res.status(404).json({ message: 'Model tidak ditemukan. Pastikan nama model benar.' });
+      }
+      if (response.status === 401) {
+          return res.status(401).json({ message: 'Token tidak valid. Cek Environment Variable.' });
       }
       if (response.status === 503) {
-          return res.status(503).json({ message: 'Model sedang loading. Coba 30 detik lagi.' });
+          return res.status(503).json({ message: 'Model sedang loading. Coba lagi dalam 30 detik.' });
       }
-      return res.status(response.status).json({ message: `Error dari AI: ${errText}` });
+      return res.status(response.status).json({ message: `Error AI: ${errText}` });
     }
 
     const imageBuffer = await response.arrayBuffer();
     
     res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'no-cache, private'); // Jangan cache gambar hasil generate
+    res.setHeader('Cache-Control', 'no-cache, private');
     return res.send(Buffer.from(imageBuffer));
 
   } catch (error) {
