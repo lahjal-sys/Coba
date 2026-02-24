@@ -1,9 +1,13 @@
+// File: js/script-ai.js
+// Token TIDAK ADA DI SINI (Sudah aman di server Vercel)
 
 let currentImgUrl = '';
 let currentLang = 'en';
 
 window.addEventListener('DOMContentLoaded', () => {
-    loadTheme(); loadGallery(); changeLanguage();
+    loadTheme(); 
+    loadGallery(); 
+    changeLanguage();
 });
 
 function loadTheme() {
@@ -48,6 +52,7 @@ window.currentW = 1024; window.currentH = 1024;
 const randoms = ["Cyberpunk cat", "Astronaut on horse", "Flower dragon", "Steampunk robot"];
 function fillRandomPrompt() { document.getElementById('imgPrompt').value = randoms[Math.floor(Math.random()*randoms.length)]; }
 
+// --- FUNGSI GENERATE GAMBAR (SUDAH AMAN) ---
 async function generateImage() {
     const p = document.getElementById('imgPrompt').value.trim();
     if(!p) return alert("Enter prompt!");
@@ -61,10 +66,6 @@ async function generateImage() {
     btn.disabled = true; placeholder.style.display='none'; container.style.display='none'; actions.style.display='none'; loader.style.display='inline-block';
 
     try {
-        // PERUBAHAN BESAR DI SINI:
-        // Dulu: fetch('https://api.huggingface.co/...', { headers: { Authorization: ... } })
-        // Sekarang: fetch('/api/generate-image', ...) -> Token otomatis dipakai server
-        
         const response = await fetch('/api/generate-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -75,13 +76,11 @@ async function generateImage() {
             })
         });
 
-        // Cek jika server mengembalikan error
         if (!response.ok) {
             const errData = await response.json();
             throw new Error(errData.message || 'Gagal generate gambar');
         }
         
-        // Karena response kita sekarang adalah image blob langsung dari server kita
         const blob = await response.blob();
         currentImgUrl = URL.createObjectURL(blob);
         
@@ -98,37 +97,58 @@ async function generateImage() {
         btn.disabled=false;
     }
 }
+
+// --- FUNGSI CHAT (BARU DIPERBAIKI - AMAN) ---
 async function sendChat() {
     const inp = document.getElementById('chatInput');
     const txt = inp.value.trim();
     if(!txt) return;
+
     const box = document.getElementById('chatBox');
+    
+    // Tampilkan pesan user
     box.innerHTML += `<div class="message user">${txt}</div>`;
-    inp.value='';
-    const id = 'l'+Date.now();
-    box.innerHTML += `<div class="message ai" id="${id}">...</div>`;
+    inp.value = '';
     box.scrollTop = box.scrollHeight;
 
-    // SUSUN URL TARGET (TANPA SPASI)
-    const target = `https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct`;
-    const proxyUrl = `${PROXY_BASE}${encodeURIComponent(target)}`;
+    // Tampilkan indikator loading
+    const loadingId = 'loading-' + Date.now();
+    box.innerHTML += `<div class="message ai" id="${loadingId}"><i class="fas fa-spinner fa-spin"></i> Thinking...</div>`;
+    box.scrollTop = box.scrollHeight;
 
     try {
-        const res = await fetch(proxyUrl, {
-            method:'POST',
-            headers: {'Authorization':`Bearer ${HF_TOKEN}`, 'Content-Type':'application/json'},
-            body: JSON.stringify({inputs: txt})
+        // KIRIM KE SERVER SENDIRI (BUKAN LANGSUNG KE HF)
+        const response = await fetch('/api/send-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inputs: txt })
         });
-        const d = await res.json();
-        let reply = "Error.";
-        if(d[0] && d[0].generated_text) reply = d[0].generated_text.replace(txt,'').trim();
-        document.getElementById(id).innerText = reply;
-    } catch(e) { 
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.message || 'Gagal chat');
+        }
+
+        const data = await response.json();
+        let reply = "Maaf, saya tidak mengerti.";
+        
+        // Parsing jawaban dari Llama 3
+        if (data && data[0] && data[0].generated_text) {
+            // Kadang output includes input, jadi kita bersihkan
+            reply = data[0].generated_text.replace(txt, '').trim();
+            // Ambil baris pertama saja jika ada enter
+            reply = reply.split('\n')[0]; 
+        }
+
+        document.getElementById(loadingId).innerText = reply;
+
+    } catch(e) {
         console.error(e);
-        document.getElementById(id).innerText = "Network Error"; 
+        document.getElementById(loadingId).innerText = "⚠️ Error: " + e.message;
     }
 }
 
+// --- FUNGSI GALERI & UTILS ---
 function saveToGallery(url) {
     let g = JSON.parse(localStorage.getItem('vs_g')||'[]');
     g.unshift(url); if(g.length>6)g.pop();
