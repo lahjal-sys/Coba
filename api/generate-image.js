@@ -1,10 +1,9 @@
 // File: api/generate-image.js
-// Backend untuk Generate Gambar menggunakan Pollinations.ai (Gratis & Tanpa Token)
+// Backend Gambar menggunakan Pollinations.ai VIA PROXY (Anti Block 530)
 
 export default async function handler(req, res) {
-  // Setup CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -17,35 +16,33 @@ export default async function handler(req, res) {
   }
 
   try {
-    // POLLINATIONS.AI URL FORMAT
-    // Kita encode prompt agar aman untuk URL
     const encodedPrompt = encodeURIComponent(prompt);
-    
-    // Tambahkan seed random agar setiap request unik (tidak cache)
     const seed = Math.floor(Math.random() * 1000000);
     
-    // URL Gambar Langsung dari Pollinations
-    // Model default mereka sangat bagus (berbasis Flux/SDXL)
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width || 1024}&height=${height || 1024}&seed=${seed}&nologo=true`;
+    // URL Asli Pollinations
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width || 1024}&height=${height || 1024}&seed=${seed}&nologo=true&model=flux`;
 
-    console.log("Mengambil gambar dari:", imageUrl);
+    // KITA PAKAI PROXY ALLORIGINS UNTUK MENGHINDARI BLOKIR IP VERCEL
+    // AllOrigins akan mengambil gambar dari Pollinations lalu meneruskannya ke kita
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(pollinationsUrl)}`;
 
-    // Fetch gambar sebagai blob/binary
-    const imageResponse = await fetch(imageUrl);
+    console.log("Mengambil gambar via Proxy:", proxyUrl);
+
+    const imageResponse = await fetch(proxyUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' // Menyamar sebagai browser biasa
+      }
+    });
 
     if (!imageResponse.ok) {
-      throw new Error(`Gagal mengambil gambar: ${imageResponse.status}`);
+      throw new Error(`Gagal mengambil gambar: ${imageResponse.status} ${imageResponse.statusText}`);
     }
 
-    // Ambil data binary gambar
     const imageBuffer = await imageResponse.arrayBuffer();
-    
-    // Tentukan tipe konten (Pollinations biasanya mengembalikan JPEG/PNG)
     const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
 
-    // Kirim balik gambar ke frontend
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'no-cache, private'); // Jangan cache agar selalu baru
+    res.setHeader('Cache-Control', 'no-cache, private');
     return res.send(Buffer.from(imageBuffer));
 
   } catch (error) {
