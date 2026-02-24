@@ -12,67 +12,69 @@ export default async function handler(req, res) {
   const token = process.env.HF_TOKEN;
 
   if (!token) {
-    console.error("TOKEN TIDAK DITEMUKAN DI ENVIRONMENT VARIABLES");
-    return res.status(500).json({ message: 'Konfigurasi Server Error: Token Hilang' });
+    return res.status(500).json({ message: 'Token Rahasia tidak ditemukan di Server Vercel.' });
   }
 
   try {
-    // STRATEGI BARU: Gunakan endpoint inference standar yang masih work untuk server-side
-    // Banyak laporan bahwa router.huggingface.co sering 404 untuk model tertentu.
-    // Kita coba endpoint utama dengan header User-Agent yang kuat.
-    const MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct";
-    const API_URL = `https://api-inference.huggingface.co/models/${MODEL_ID}`;
+    // KONFIGURASI FINAL UNTUK ROUTER.HUGGINGFACE.CO
+    // Gunakan Mistral 7B Instruct v0.3 (Sangat Stabil di Free Tier)
+    const MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3";
+    
+    // FORMAT URL YANG BENAR: https://router.huggingface.co/hf-inference/models/{MODEL_ID}
+    const API_URL = `https://router.huggingface.co/hf-inference/models/${MODEL_ID}`;
 
-    console.log(`Mengirim chat ke: ${API_URL}`);
+    console.log("Mengirim request ke Router HF:", API_URL);
 
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'ViralScope-AI-Production/1.0', 
-        'X-HF-Client': 'Vercel-Serverless'
+        'User-Agent': 'ViralScope-AI-Vercel/1.0',
+        // Header tambahan agar router mengenali ini request valid
+        'X-HF-Client': 'Vercel-Serverless-Function'
       },
       body: JSON.stringify({ 
         inputs: inputs,
         parameters: {
-            max_new_tokens: 256,
-            temperature: 0.7,
-            return_full_text: false // Penting! Agar tidak mengulang prompt
+            max_new_tokens: 256,   // Batasi panjang jawaban
+            temperature: 0.7,      // Kreativitas seimbang
+            return_full_text: false // Jangan kembalikan prompt asli
         }
       })
     });
 
-    const responseData = await response.text(); // Baca dulu sebagai text untuk debug
+    // Baca respons dulu sebagai text untuk debugging jika error
+    const rawResponse = await response.text();
 
     if (!response.ok) {
-      console.error(`HF Error ${response.status}:`, responseData);
+      console.error(`Router Error ${response.status}:`, rawResponse);
       
       if (response.status === 404) {
-        return res.status(404).json({ message: 'Model AI sedang tidur atau tidak ditemukan. Coba prompt lain.' });
+        return res.status(404).json({ message: 'Model Chat tidak ditemukan di Router. Coba lagi nanti.' });
       }
       if (response.status === 401) {
-        return res.status(401).json({ message: 'Token Rahasia Salah/Kadaluarsa. Hubungi Admin.' });
+        return res.status(401).json({ message: 'Token Invalid. Pastikan Token di Vercel Environment Variables benar.' });
       }
       if (response.status === 503) {
-        return res.status(503).json({ message: 'Model sedang loading (Cold Boot). Tunggu 30 detik lalu coba lagi!' });
+        return res.status(503).json({ message: 'Model sedang dimuat (Cold Start). Tunggu 30 detik lalu kirim pesan lagi!' });
       }
-      
-      // Coba parse JSON jika errornya dalam format JSON
+
+      // Coba parse jika errornya JSON
       try {
-        const errJson = JSON.parse(responseData);
-        return res.status(response.status).json({ message: `Error: ${errJson.error || responseData}` });
+        const errJson = JSON.parse(rawResponse);
+        return res.status(response.status).json({ message: `Error: ${errJson.error || rawResponse}` });
       } catch (e) {
-        return res.status(response.status).json({ message: `Error Server: ${responseData}` });
+        return res.status(response.status).json({ message: `Error Server: ${rawResponse}` });
       }
     }
 
-    // Jika sukses, parse JSON
-    const data = JSON.parse(responseData);
+    // Jika sukses (status 200), parse JSON
+    const data = JSON.parse(rawResponse);
     return res.status(200).json(data);
 
   } catch (error) {
-    console.error('CRITICAL SERVER ERROR:', error);
-    return res.status(500).json({ message: 'Gagal terhubung ke otak AI.' });
+    console.error('CRITICAL SERVER CRASH:', error);
+    return res.status(500).json({ message: 'Gagal memproses permintaan chat.' });
   }
 }
