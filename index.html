@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ViralScope - Ultimate Fixed</title>
-    <link rel="stylesheet" href="css/style-main.css">
-
+    <!-- PERBAIKAN 1: Tambahkan garis miring '/' di depan -->
+    <link rel="stylesheet" href="/css/style-main.css">
 </head>
 <body>
 
@@ -24,10 +24,15 @@
     </nav>
 
     <div class="dropdown-menu" id="dropdownMenu">
+        <!-- PERBAIKAN 2: Arahkan Home dengan benar -->
         <a class="menu-item" onclick="loadCategory('trending'); toggleMenu()">Home <span>🏠</span></a>
-        <a class="menu-item" onclick="alert('AI Generator Coming Soon!'); toggleMenu()">AI Generator <span>🤖</span></a>
+        
+        <!-- PERBAIKAN 3: Link ke file AI Generator yang baru -->
+        <a class="menu-item" href="ai-generator.html" onclick="toggleMenu()">AI Generator <span>🤖</span></a>
+        
         <a class="menu-item" href="https://google.com" target="_blank" onclick="toggleMenu()">External Links <span>🔗</span></a>
         <a class="menu-item" onclick="showFavorites(); toggleMenu()">Favorites <span>❤️</span></a>
+        
         <div style="padding: 15px 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
             <span style="color:var(--text); font-weight:600;">Language</span>
             <select id="langSelect" style="background:var(--chip-bg); color:var(--text); border:1px solid var(--border); padding:5px 10px; border-radius:15px; outline:none;" onchange="changeLanguage()">
@@ -40,7 +45,6 @@
     </div>
 
     <div id="homeView" class="container">
-        <!-- Filters: Max-width sama dengan search bar -->
         <div class="filters">
             <div class="chip active" onclick="loadCategory('trending')" id="chip-trending">🔥 Viral Now</div>
             <div class="chip" onclick="loadCategory('funny')" id="chip-funny">🐱 Funny</div>
@@ -90,7 +94,9 @@
 
     <button id="backToTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</button>
     <div id="toast">✅ Link copied to clipboard!</div>
-<script src="js/script-main.js"></script>
+
+    <!-- PERBAIKAN 4: Tambahkan garis miring '/' di depan src -->
+    <script src="/js/script-main.js"></script>
     
 </body>
 </html>
