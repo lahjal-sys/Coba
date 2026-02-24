@@ -1,4 +1,4 @@
-<style>
+
         :root {
             --bg: #0f0f0f; --card-bg: #1e1e1e; --text: #ffffff; --text-sec: #aaaaaa;
             --nav-bg: rgba(15, 15, 15, 0.95); --input-bg: #2a2a2a; --border: #333;
@@ -233,4 +233,3 @@
         .fav-header { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto 20px; }
         .close-fav { background: var(--chip-bg); border: 1px solid var(--border); color: var(--text); padding: 8px 20px; border-radius: 20px; cursor: pointer; }
 
-    </style>
