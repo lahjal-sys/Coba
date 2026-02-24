@@ -12,25 +12,25 @@ export default async function handler(req, res) {
   const token = process.env.HF_TOKEN;
 
   if (!token) {
-    return res.status(500).json({ message: 'Token Rahasia tidak ditemukan di Server Vercel.' });
+    return res.status(500).json({ message: 'Token Rahasia tidak ditemukan.' });
   }
 
   try {
-    // MODEL FINAL: META LLAMA 3 (PALING STABIL DI ROUTER)
-    const MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct";
+    // GANTI MODEL KE MISTRAL 7B INSTRUCT V0.3
+    // Model ini sangat stabil, cepat, dan hampir pasti ada di Router Gratisan.
+    const MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3";
     
-    // URL WAJIB: Router Hugging Face dengan path /hf-inference/models/
+    // URL Router Wajib
     const API_URL = `https://router.huggingface.co/hf-inference/models/${MODEL_ID}`;
 
-    console.log("Mengirim chat ke Router HF:", API_URL);
+    console.log("Mengirim chat ke Mistral:", API_URL);
 
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'ViralScope-AI-Production/1.0',
-        'X-HF-Client': 'Vercel-Serverless'
+        'User-Agent': 'ViralScope-AI/1.0'
       },
       body: JSON.stringify({ 
         inputs: inputs,
@@ -45,16 +45,16 @@ export default async function handler(req, res) {
     const rawResponse = await response.text();
 
     if (!response.ok) {
-      console.error(`Router Error ${response.status}:`, rawResponse);
+      console.error(`Mistral Error ${response.status}:`, rawResponse);
       
       if (response.status === 404) {
-        return res.status(404).json({ message: 'Model Llama 3 tidak ditemukan di Router. Pastikan Token aktif.' });
+        return res.status(404).json({ message: 'Model Mistral tidak ditemukan. Coba lagi nanti.' });
       }
       if (response.status === 401) {
-        return res.status(401).json({ message: 'Token Invalid. Cek Environment Variables di Vercel.' });
+        return res.status(401).json({ message: 'Token Invalid.' });
       }
       if (response.status === 503) {
-        return res.status(503).json({ message: 'Model sedang loading (Cold Start). Tunggu 30 detik lalu coba lagi!' });
+        return res.status(503).json({ message: 'Model sedang loading. Tunggu 30 detik lalu coba lagi!' });
       }
       
       return res.status(response.status).json({ message: `Error AI: ${rawResponse}` });
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
     return res.status(200).json(data);
 
   } catch (error) {
-    console.error('CRITICAL SERVER CRASH:', error);
-    return res.status(500).json({ message: 'Gagal terhubung ke otak AI: ' + error.message });
+    console.error('Server Crash:', error);
+    return res.status(500).json({ message: 'Gagal connect ke AI: ' + error.message);
   }
 }
