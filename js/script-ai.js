@@ -1,6 +1,38 @@
 let currentImgUrl = '';
 let currentLang = 'en';
 
+// --- TRANSLATIONS (DITAMBAHKAN TEKS LOADING) ---
+const translations = {
+    en: { 
+        ph_img: "A cyberpunk cat...", 
+        loading_gen: "Generating Image...", 
+        loading_chat: "Thinking...", 
+        err_gen: "Failed to generate image",
+        err_chat: "Chat failed"
+    },
+    id: { 
+        ph_img: "Kucing cyberpunk...", 
+        loading_gen: "Sedang Menggambar...", 
+        loading_chat: "Berpikir...", 
+        err_gen: "Gagal membuat gambar",
+        err_chat: "Chat gagal"
+    },
+    es: { 
+        ph_img: "Gato cyberpunk...", 
+        loading_gen: "Generando imagen...", 
+        loading_chat: "Pensando...", 
+        err_gen: "Error al generar",
+        err_chat: "Chat falló"
+    },
+    jp: { 
+        ph_img: "サイバーパンクな猫...", 
+        loading_gen: "生成中...", 
+        loading_chat: "考え中...", 
+        err_gen: "生成エラー",
+        err_chat: "チャット失敗"
+    }
+};
+
 window.addEventListener('DOMContentLoaded', () => {
     loadTheme(); 
     loadGallery(); 
@@ -33,10 +65,11 @@ function switchTab(t) {
 function changeLanguage() {
     const l = document.getElementById('langSelect').value;
     currentLang = l;
+    const t = translations[l];
+    
+    // Update Placeholder
     const ph = document.getElementById('imgPrompt');
-    if(l==='id') ph.placeholder = "Kucing cyberpunk...";
-    else if(l==='es') ph.placeholder = "Gato cyberpunk...";
-    else ph.placeholder = "A cyberpunk cat...";
+    ph.placeholder = t.ph_img;
 }
 
 function setRatio(w,h,b) {
@@ -59,17 +92,18 @@ async function generateImage() {
     const container = document.getElementById('imgContainer');
     const actions = document.getElementById('imgActions');
     
-    // Reset tampilan
+    // Ambil teks loading sesuai bahasa
+    const t = translations[currentLang];
+    
     placeholder.style.display='none'; 
     container.style.display='none'; 
     actions.style.display='none'; 
     
-    // Ubah tombol jadi status loading yang jelas
-    const originalBtnText = btn.innerHTML;
+    // Ubah tombol jadi status loading dinamis
+    const originalBtnText = '<i class="fas fa-magic"></i> Generate'; // Simpan teks asli (atau sesuaikan)
     btn.disabled = true; 
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sedang Menggambar...';
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
     
-    // Loader kecil tetap nyala juga buat jaga-jaga
     loader.style.display='inline-block';
 
     try {
@@ -85,7 +119,7 @@ async function generateImage() {
 
         if (!response.ok) {
             const errData = await response.json();
-            throw new Error(errData.message || 'Gagal generate gambar');
+            throw new Error(errData.message || t.err_gen);
         }
         
         const blob = await response.blob();
@@ -99,7 +133,7 @@ async function generateImage() {
             container.style.display='block'; 
             actions.style.display='flex'; 
             btn.disabled=false;
-            btn.innerHTML = originalBtnText; // Kembalikan teks tombol
+            btn.innerHTML = '<i class="fas fa-magic"></i> Generate'; // Kembalikan teks
             saveToGallery(currentImgUrl);
         };
     } catch(e) {
@@ -108,7 +142,7 @@ async function generateImage() {
         placeholder.style.display='block';
         placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}</span>`;
         btn.disabled=false;
-        btn.innerHTML = originalBtnText;
+        btn.innerHTML = '<i class="fas fa-magic"></i> Generate';
     }
 }
 
@@ -122,8 +156,9 @@ async function sendChat() {
     inp.value = '';
     box.scrollTop = box.scrollHeight;
 
+    const t = translations[currentLang];
     const loadingId = 'loading-' + Date.now();
-    box.innerHTML += `<div class="message ai" id="${loadingId}"><i class="fas fa-spinner fa-spin"></i> Thinking...</div>`;
+    box.innerHTML += `<div class="message ai" id="${loadingId}"><i class="fas fa-spinner fa-spin"></i> ${t.loading_chat}</div>`;
     box.scrollTop = box.scrollHeight;
 
     try {
@@ -135,14 +170,14 @@ async function sendChat() {
 
         if (!response.ok) {
             const errData = await response.json();
-            throw new Error(errData.message || 'Gagal chat');
+            throw new Error(errData.message || t.err_chat);
         }
 
         const data = await response.json();
-        let reply = "Maaf, saya tidak mengerti.";
+        let reply = "Sorry, I didn't understand.";
         
         if (data && data[0] && data[0].generated_text) {
-            reply = data[0].generated_text.replace(txt, '').trim().split('\n')[0]; 
+            reply = data[0].generated_text.trim(); 
         }
 
         document.getElementById(loadingId).innerText = reply;
@@ -153,16 +188,12 @@ async function sendChat() {
     }
 }
 
-// ... (kode sebelumnya tetap) ...
-
 function saveToGallery(url) {
-    if (!url) return; // Jangan simpan jika URL kosong
+    if (!url) return;
     let g = JSON.parse(localStorage.getItem('vs_g') || '[]');
-    
-    // Cek duplikasi
     if (!g.includes(url)) {
         g.unshift(url); 
-        if (g.length > 6) g.pop(); // Simpan max 6 gambar terbaru
+        if(g.length>6) g.pop();
         localStorage.setItem('vs_g', JSON.stringify(g)); 
         loadGallery();
     }
@@ -172,22 +203,20 @@ function loadGallery() {
     let g = JSON.parse(localStorage.getItem('vs_g') || '[]');
     const grid = document.getElementById('galleryGrid');
     const sec = document.getElementById('gallerySection');
+    if (!grid) return;
+    grid.innerHTML='';
     
-    if (!grid) return; // Jaga-jaga kalau elemen belum load
-    grid.innerHTML = '';
-    
-    if (g.length > 0 && g[0] !== '') {
-        sec.style.display = 'block';
+    if(g.length>0 && g[0] !== ''){
+        sec.style.display='block';
         g.forEach((u, index) => {
-            if (!u) return; // Skip jika URL kosong
-            const d = document.createElement('div'); 
-            d.className = 'gallery-item';
-            // Gunakan onerror untuk handle gambar rusak
-            d.innerHTML = `<img src="${u}" alt="Art ${index}" onclick="viewImage('${u}')" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNjY2MiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB5PSIzIiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHJ4PSIyIiByeT0iMiI+PC9yZWN0PjxjaXJjbGUgY3g9IjguNSIgY3k9IjguNSIgcj0iMS41Ij48L2NpcmNsZT48cG9seWxpbmUgcG9pbnRzPSIyMSAxNSAxNiAxMCA1IDIxIj48L3BvbHlsaW5lPjwvc3ZnPg=='">`; 
+            if (!u) return;
+            const d=document.createElement('div'); 
+            d.className='gallery-item';
+            d.innerHTML = `<img src="${u}" alt="Art ${index}" onclick="viewImage('${u}')">`; 
             grid.appendChild(d);
         });
     } else {
-        sec.style.display = 'none';
+        sec.style.display='none';
     }
 }
 
@@ -200,23 +229,16 @@ function viewImage(u) {
     const loader = document.getElementById('imgLoader');
     const actions = document.getElementById('imgActions');
 
-    // Set source
     imgElement.src = u;
-    
-    // Paksa tampil
     placeholder.style.display = 'none';
     loader.style.display = 'none';
     container.style.display = 'block';
     actions.style.display = 'flex';
     
-    // Scroll halus ke hasil
     setTimeout(() => {
         container.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
 }
-
-// ... (kode download/share tetap) ...
-
 
 function downloadImage() { 
     if(!currentImgUrl)return; 
