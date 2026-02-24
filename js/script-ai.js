@@ -153,57 +153,70 @@ async function sendChat() {
     }
 }
 
+// ... (kode sebelumnya tetap) ...
+
 function saveToGallery(url) {
-    let g = JSON.parse(localStorage.getItem('vs_g')||'[]');
-    // Cek duplikasi URL biar galeri gak penuh sama gambar sama
+    if (!url) return; // Jangan simpan jika URL kosong
+    let g = JSON.parse(localStorage.getItem('vs_g') || '[]');
+    
+    // Cek duplikasi
     if (!g.includes(url)) {
         g.unshift(url); 
-        if(g.length>6) g.pop();
+        if (g.length > 6) g.pop(); // Simpan max 6 gambar terbaru
         localStorage.setItem('vs_g', JSON.stringify(g)); 
         loadGallery();
     }
 }
 
 function loadGallery() {
-    let g = JSON.parse(localStorage.getItem('vs_g')||'[]');
+    let g = JSON.parse(localStorage.getItem('vs_g') || '[]');
     const grid = document.getElementById('galleryGrid');
     const sec = document.getElementById('gallerySection');
-    grid.innerHTML='';
     
-    if(g.length>0){
-        sec.style.display='block';
+    if (!grid) return; // Jaga-jaga kalau elemen belum load
+    grid.innerHTML = '';
+    
+    if (g.length > 0 && g[0] !== '') {
+        sec.style.display = 'block';
         g.forEach((u, index) => {
-            const d=document.createElement('div'); 
-            d.className='gallery-item';
-            // Tambahkan onclick yang aman
-            d.innerHTML = `<img src="${u}" alt="Gallery ${index}" onclick="viewImage('${u}')">`; 
+            if (!u) return; // Skip jika URL kosong
+            const d = document.createElement('div'); 
+            d.className = 'gallery-item';
+            // Gunakan onerror untuk handle gambar rusak
+            d.innerHTML = `<img src="${u}" alt="Art ${index}" onclick="viewImage('${u}')" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNjY2MiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB5PSIzIiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHJ4PSIyIiByeT0iMiI+PC9yZWN0PjxjaXJjbGUgY3g9IjguNSIgY3k9IjguNSIgcj0iMS41Ij48L2NpcmNsZT48cG9seWxpbmUgcG9pbnRzPSIyMSAxNSAxNiAxMCA1IDIxIj48L3BvbHlsaW5lPjwvc3ZnPg=='">`; 
             grid.appendChild(d);
         });
     } else {
-        sec.style.display='none';
+        sec.style.display = 'none';
     }
 }
 
-// Fungsi khusus untuk view dari galeri
 function viewImage(u) {
+    if (!u) return;
     currentImgUrl = u;
     const imgElement = document.getElementById('generatedImage');
-    
+    const container = document.getElementById('imgContainer');
+    const placeholder = document.getElementById('imgPlaceholder');
+    const loader = document.getElementById('imgLoader');
+    const actions = document.getElementById('imgActions');
+
     // Set source
     imgElement.src = u;
     
-    // Atur tampilan manual
-    document.getElementById('imgPlaceholder').style.display='none';
-    document.getElementById('imgLoader').style.display='none';
-    document.getElementById('imgContainer').style.display='block';
-    document.getElementById('imgActions').style.display='flex';
+    // Paksa tampil
+    placeholder.style.display = 'none';
+    loader.style.display = 'none';
+    container.style.display = 'block';
+    actions.style.display = 'flex';
     
-    // Scroll ke area hasil
-    const resultArea = document.getElementById('imgContainer');
-    if(resultArea) {
-        resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    // Scroll halus ke hasil
+    setTimeout(() => {
+        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
 }
+
+// ... (kode download/share tetap) ...
+
 
 function downloadImage() { 
     if(!currentImgUrl)return; 
