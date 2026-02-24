@@ -92,60 +92,77 @@ async function generateImage() {
     const container = document.getElementById('imgContainer');
     const actions = document.getElementById('imgActions');
     
-    // Ambil teks loading sesuai bahasa
     const t = translations[currentLang];
     
+    // Reset UI
     placeholder.style.display='none'; 
     container.style.display='none'; 
     actions.style.display='none'; 
     
-    // Ubah tombol jadi status loading dinamis
-    const originalBtnText = '<i class="fas fa-magic"></i> Generate'; // Simpan teks asli (atau sesuaikan)
+    // Set Loading State
+    const originalBtnText = btn.innerHTML;
     btn.disabled = true; 
     btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
-    
     loader.style.display='inline-block';
 
     try {
-        const response = await fetch('/api/generate-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                prompt: p, 
-                width: window.currentW, 
-                height: window.currentH 
-            })
-        });
-
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || t.err_gen);
-        }
+        // KONFIGURASI
+        const width = window.currentW || 1024;
+        const height = window.currentH || 1024;
+        const seed = Math.floor(Math.random() * 1000000);
         
+        // URL LANGSUNG (POLLINATIONS FLUX MODEL)
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
+
+        console.log("Requesting image:", imageUrl);
+
+        // FETCH SEBAGAI BLOB (PENTING: JANGAN PAKAI .json())
+        const response = await fetch(imageUrl);
+        
+        if (!response.ok) {
+            // Jika error, baca sebagai teks dulu biar tidak crash JSON
+            const errorText = await response.text();
+            throw new Error(`Server Error: ${response.status} - ${errorText.substring(0, 50)}`);
+        }
+
         const blob = await response.blob();
+        
+        // Validasi Ukuran Blob
+        if (blob.size < 1000) {
+            throw new Error("Gambar terlalu kecil/rusak.");
+        }
+
+        // Buat URL Objek
         currentImgUrl = URL.createObjectURL(blob);
         
         const img = document.getElementById('generatedImage');
         img.src = currentImgUrl;
         
+        // Saat gambar selesai dimuat browser
         img.onload = () => {
             loader.style.display='none'; 
             container.style.display='block'; 
             actions.style.display='flex'; 
             btn.disabled=false;
-            btn.innerHTML = '<i class="fas fa-magic"></i> Generate'; // Kembalikan teks
+            btn.innerHTML = originalBtnText;
             saveToGallery(currentImgUrl);
+            console.log("Image generated successfully!");
         };
+        
+        // Handle jika gambar gagal dimuat (onerror)
+        img.onerror = () => {
+            throw new Error("Gagal memuat gambar di browser.");
+        };
+
     } catch(e) {
-        console.error(e);
+        console.error("Generate Error:", e);
         loader.style.display='none'; 
         placeholder.style.display='block';
         placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}</span>`;
         btn.disabled=false;
-        btn.innerHTML = '<i class="fas fa-magic"></i> Generate';
+        btn.innerHTML = originalBtnText;
     }
 }
-
 async function sendChat() {
     const inp = document.getElementById('chatInput');
     const txt = inp.value.trim();
