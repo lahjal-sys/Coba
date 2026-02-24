@@ -1,75 +1,55 @@
 // File: api/generate-image.js
+// Backend untuk Generate Gambar menggunakan Pollinations.ai (Gratis & Tanpa Token)
+
 export default async function handler(req, res) {
   // Setup CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
   const { prompt, width, height } = req.body;
-  const token = process.env.HF_TOKEN; 
 
-  if (!token) {
-    return res.status(500).json({ message: 'Token rahasia tidak ditemukan di server' });
+  if (!prompt) {
+    return res.status(400).json({ message: 'Prompt wajib diisi!' });
   }
 
   try {
-    // FORMAT URL BARU UNTUK ROUTER.HUGGINGFACE.CO
-    // Perhatikan: Tidak ada kata 'models' di tengah jika pakai router spesifik, 
-    // TAPI untuk inference umum, kita pakai format ini:
-    const MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0";
-    const API_URL = `https://router.huggingface.co/hf-inference/models/${MODEL_ID}`;
+    // POLLINATIONS.AI URL FORMAT
+    // Kita encode prompt agar aman untuk URL
+    const encodedPrompt = encodeURIComponent(prompt);
+    
+    // Tambahkan seed random agar setiap request unik (tidak cache)
+    const seed = Math.floor(Math.random() * 1000000);
+    
+    // URL Gambar Langsung dari Pollinations
+    // Model default mereka sangat bagus (berbasis Flux/SDXL)
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width || 1024}&height=${height || 1024}&seed=${seed}&nologo=true`;
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'ViralScope-AI/1.0',
-        // Header tambahan untuk memastikan request diterima
-        'X-HF-Client': 'ViralScope-Vercel' 
-      },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: { 
-            width: width || 1024, 
-            height: height || 1024,
-            num_inference_steps: 25 
-        }
-      })
-    });
+    console.log("Mengambil gambar dari:", imageUrl);
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("HF Router Error:", response.status, errText);
-      
-      if (response.status === 404) {
-          return res.status(404).json({ message: 'Model tidak ditemukan. Pastikan nama model benar.' });
-      }
-      if (response.status === 401) {
-          return res.status(401).json({ message: 'Token tidak valid. Cek Environment Variable.' });
-      }
-      if (response.status === 503) {
-          return res.status(503).json({ message: 'Model sedang loading. Coba lagi dalam 30 detik.' });
-      }
-      return res.status(response.status).json({ message: `Error AI: ${errText}` });
+    // Fetch gambar sebagai blob/binary
+    const imageResponse = await fetch(imageUrl);
+
+    if (!imageResponse.ok) {
+      throw new Error(`Gagal mengambil gambar: ${imageResponse.status}`);
     }
 
-    const imageBuffer = await response.arrayBuffer();
+    // Ambil data binary gambar
+    const imageBuffer = await imageResponse.arrayBuffer();
     
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'no-cache, private');
+    // Tentukan tipe konten (Pollinations biasanya mengembalikan JPEG/PNG)
+    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+
+    // Kirim balik gambar ke frontend
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'no-cache, private'); // Jangan cache agar selalu baru
     return res.send(Buffer.from(imageBuffer));
 
   } catch (error) {
-    console.error('Server Crash:', error);
-    return res.status(500).json({ message: 'Gagal memproses permintaan.' });
+    console.error('Image Gen Crash:', error);
+    return res.status(500).json({ message: 'Gagal generate gambar: ' + error.message });
   }
 }
