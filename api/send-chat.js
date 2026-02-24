@@ -10,14 +10,12 @@ export default async function handler(req, res) {
   const { inputs } = req.body;
   const token = process.env.HF_TOKEN;
 
-  if (!token) return res.status(500).json({ message: 'Token tidak ditemukan di server' });
+  if (!token) return res.status(500).json({ message: 'Token tidak ditemukan' });
 
   try {
-    const MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct";
-    // Pastikan URL ini benar sesuai standar router terbaru
+    // GANTI MODEL KE MISTRAL 7B (LEBIH STABIL & CEPAT)
+    const MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"; 
     const API_URL = `https://router.huggingface.co/hf-inference/models/${MODEL_ID}`;
-
-    console.log("Mengirim request ke HF:", API_URL); // Log untuk debugging
 
     const response = await fetch(API_URL, {
       method: 'POST',
@@ -26,7 +24,13 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'User-Agent': 'ViralScope-AI/1.0'
       },
-      body: JSON.stringify({ inputs: inputs })
+      body: JSON.stringify({ 
+          inputs: inputs,
+          parameters: {
+              max_new_tokens: 256, // Batasi panjang jawaban biar gak kelamaan
+              temperature: 0.7
+          }
+      })
     });
 
     if (!response.ok) {
@@ -34,7 +38,7 @@ export default async function handler(req, res) {
       console.error("HF Chat Error:", response.status, errText);
       
       if (response.status === 404) {
-          return res.status(404).json({ message: 'Model Chat tidak ditemukan. Cek nama model.' });
+          return res.status(404).json({ message: 'Model Chat tidak tersedia. Coba lagi nanti.' });
       }
       if (response.status === 401) {
           return res.status(401).json({ message: 'Token tidak valid.' });
