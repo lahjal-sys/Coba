@@ -1,52 +1,71 @@
-// File: api/generate-image.js
-// Backend Gambar menggunakan Pollinations.ai VIA PROXY (Anti Block 530)
-
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
-
-  const { prompt, width, height } = req.body;
-
-  if (!prompt) {
-    return res.status(400).json({ message: 'Prompt wajib diisi!' });
-  }
-
-  try {
-    const encodedPrompt = encodeURIComponent(prompt);
-    const seed = Math.floor(Math.random() * 1000000);
+async function generateImage() {
+    const p = document.getElementById('imgPrompt').value.trim();
+    if(!p) return alert("Enter prompt!");
     
-    // URL Asli Pollinations
-    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width || 1024}&height=${height || 1024}&seed=${seed}&nologo=true&model=flux`;
+    const btn = document.getElementById('genImgBtn');
+    const loader = document.getElementById('imgLoader');
+    const placeholder = document.getElementById('imgPlaceholder');
+    const container = document.getElementById('imgContainer');
+    const actions = document.getElementById('imgActions');
+    
+    const t = translations[currentLang];
+    
+    placeholder.style.display='none'; 
+    container.style.display='none'; 
+    actions.style.display='none'; 
+    
+    // Ubah tombol jadi loading
+    const originalBtnText = btn.innerHTML;
+    btn.disabled = true; 
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
+    loader.style.display='inline-block';
 
-    // KITA PAKAI PROXY ALLORIGINS UNTUK MENGHINDARI BLOKIR IP VERCEL
-    // AllOrigins akan mengambil gambar dari Pollinations lalu meneruskannya ke kita
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(pollinationsUrl)}`;
+    try {
+        // STRATEGI BARU: DIRECT FETCH DARI FRONTEND (Tanpa Proxy, Tanpa Server Vercel)
+        // Pollinations mendukung CORS, jadi bisa dipanggil langsung dari browser.
+        const width = window.currentW || 1024;
+        const height = window.currentH || 1024;
+        const seed = Math.floor(Math.random() * 1000000);
+        
+        // URL Langsung ke Pollinations (Model Flux)
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
 
-    console.log("Mengambil gambar via Proxy:", proxyUrl);
+        console.log("Fetching image directly from:", imageUrl);
 
-    const imageResponse = await fetch(proxyUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' // Menyamar sebagai browser biasa
-      }
-    });
+        // Fetch sebagai blob
+        const response = await fetch(imageUrl);
+        
+        if (!response.ok) {
+            throw new Error(`Gagal mengunduh gambar: ${response.status}`);
+        }
 
-    if (!imageResponse.ok) {
-      throw new Error(`Gagal mengambil gambar: ${imageResponse.status} ${imageResponse.statusText}`);
+        const blob = await response.blob();
+        
+        // Validasi apakah benar gambar
+        if (blob.size < 1000) {
+            throw new Error("Gambar rusak atau kosong.");
+        }
+
+        currentImgUrl = URL.createObjectURL(blob);
+        
+        const img = document.getElementById('generatedImage');
+        img.src = currentImgUrl;
+        
+        img.onload = () => {
+            loader.style.display='none'; 
+            container.style.display='block'; 
+            actions.style.display='flex'; 
+            btn.disabled=false;
+            btn.innerHTML = originalBtnText;
+            saveToGallery(currentImgUrl);
+        };
+
+    } catch(e) {
+        console.error(e);
+        loader.style.display='none'; 
+        placeholder.style.display='block';
+        placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}. Coba prompt lain.</span>`;
+        btn.disabled=false;
+        btn.innerHTML = originalBtnText;
     }
-
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
-
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'no-cache, private');
-    return res.send(Buffer.from(imageBuffer));
-
-  } catch (error) {
-    console.error('Image Gen Crash:', error);
-    return res.status(500).json({ message: 'Gagal generate gambar: ' + error.message });
-  }
 }
