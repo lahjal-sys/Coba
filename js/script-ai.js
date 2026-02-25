@@ -105,25 +105,31 @@ async function generateImage() {
     btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
     loader.style.display='inline-block';
 
-    try {
-        // KONFIGURASI
-        const width = window.currentW || 1024;
-        const height = window.currentH || 1024;
-        const seed = Math.floor(Math.random() * 1000000);
-        
-        // URL LANGSUNG (POLLINATIONS FLUX MODEL)
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
+    // ... kode sebelumnya sama ...
 
-        console.log("Requesting image:", imageUrl);
+try {
+    const width = window.currentW || 1024;
+    const height = window.currentH || 1024;
+    const seed = Math.floor(Math.random() * 1000000);
+    
+    // PERUBAHAN DI SINI:
+    // Ganti 'model=flux' menjadi 'model=turbo'
+    // Turbo jauh lebih stabil, cepat, dan jarang kena block 530.
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=turbo`;
 
-        // FETCH SEBAGAI BLOB (PENTING: JANGAN PAKAI .json())
-        const response = await fetch(imageUrl);
-        
-        if (!response.ok) {
-            // Jika error, baca sebagai teks dulu biar tidak crash JSON
-            const errorText = await response.text();
-            throw new Error(`Server Error: ${response.status} - ${errorText.substring(0, 50)}`);
+    console.log("Fetching with Turbo Model:", imageUrl);
+
+    // Tetap pakai header User-Agent iPhone biar makin aman
+    const response = await fetch(imageUrl, {
+        method: 'GET',
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+            'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+            'Referer': 'https://pollinations.ai/'
         }
+    });
+    
+    // ... sisa kode sama persis seperti sebelumnya ...
 
         const blob = await response.blob();
         
