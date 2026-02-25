@@ -1,8 +1,8 @@
 // File: api/generate-image.js
-// Backend untuk Generate Gambar menggunakan DeepAI API
+// Backend untuk Generate Gambar menggunakan DeepAI API (Versi Fixed & Improved)
 
 export default async function handler(req, res) {
-  // Setup CORS
+  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -10,75 +10,77 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
-  const { prompt, width, height } = req.body;
+  const { prompt, width = 512, height = 512, grid_size = 1 } = req.body;
   const apiKey = process.env.DEEPAI_API_KEY;
 
   if (!apiKey) {
     return res.status(500).json({ message: 'Konfigurasi Server Error: DEEPAI_API_KEY tidak ditemukan di Vercel.' });
   }
 
-  if (!prompt) {
-    return res.status(400).json({ message: 'Prompt wajib diisi!' });
+  if (!prompt || typeof prompt !== 'string') {
+    return res.status(400).json({ message: 'Prompt wajib diisi dan harus string!' });
   }
 
+  // Validasi sederhana width & height (sesuai docs DeepAI)
+  const w = Math.max(128, Math.min(1536, Number(width) || 512));
+  const h = Math.max(128, Math.min(1536, Number(height) || 512));
+  
+  // Pastikan kelipatan 32
+  const finalWidth = Math.round(w / 32) * 32;
+  const finalHeight = Math.round(h / 32) * 32;
+
   try {
-    // DeepAI Endpoint untuk Text-to-Image
     const apiUrl = 'https://api.deepai.org/api/text2img';
 
-    // DeepAI menerima data dalam format FormData, bukan JSON biasa
     const formData = new FormData();
     formData.append('text', prompt);
-    
-    // DeepAI gratisan biasanya mengabaikan parameter size spesifik 
-    // atau punya rasio tetap, tapi kita coba kirim saja sebagai hint
-    // Catatan: DeepAI free tier mungkin menghasilkan gambar ukuran standar (512x512)
-    
-    console.log("Mengirim prompt ke DeepAI:", prompt);
+    formData.append('width', finalWidth.toString());
+    formData.append('height', finalHeight.toString());
+    formData.append('grid_size', grid_size.toString()); // 1 = satu gambar, 2 = grid 2x2
+
+    console.log(`Mengirim ke DeepAI → prompt: "${prompt.slice(0, 100)}...", size: ${finalWidth}x${finalHeight}, grid: ${grid_size}`);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'api-key': apiKey // Header wajib DeepAI
-        // Jangan set 'Content-Type': 'multipart/form-data' secara manual, 
-        // browser/fetch akan otomatis membuatnya saat pakai FormData
+        'api-key': apiKey,
       },
-      body: formData
+      body: formData,
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
+    if (!response.ok || data.err) {
       console.error("DeepAI Error:", data);
-      if (data.err) {
-        return res.status(response.status).json({ message: `DeepAI Error: ${data.err}` });
-      }
-      throw new Error(`DeepAI API Error: ${response.status}`);
+      return res.status(response.status || 400).json({ 
+        message: `DeepAI Error: ${data.err || data.error || 'Unknown error'}` 
+      });
     }
 
-    // DeepAI mengembalikan JSON berisi URL gambar: { output_url: "https://..." }
     if (!data.output_url) {
-      throw new Error("Tidak ada URL gambar dari DeepAI.");
+      throw new Error("Tidak ada output_url dari DeepAI.");
     }
 
-    const imageUrl = data.output_url;
-    console.log("Gambar berhasil dibuat:", imageUrl);
-
-    // Sekarang kita download gambar dari URL tersebut agar bisa dikirim balik sebagai blob
-    const imageResponse = await fetch(imageUrl);
+    // Download gambar (proxy)
+    const imageResponse = await fetch(data.output_url);
     if (!imageResponse.ok) {
-      throw new Error("Gagal mengunduh gambar dari server DeepAI.");
+      throw new Error(`Gagal download gambar: ${imageResponse.status}`);
     }
 
     const imageBuffer = await imageResponse.arrayBuffer();
-    const contentType = imageResponse.headers.get('content-type') || 'image/png';
+    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
 
-    // Kirim balik gambar binary ke frontend
+    // Kirim gambar ke frontend
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'no-cache, private');
-    return res.send(Buffer.from(imageBuffer));
+    res.setHeader('Content-Length', imageBuffer.byteLength);
+    
+    return res.status(200).send(Buffer.from(imageBuffer));
 
   } catch (error) {
     console.error('Image Gen Crash:', error);
-    return res.status(500).json({ message: 'Gagal generate gambar: ' + error.message });
+    return res.status(500).json({ 
+      message: 'Gagal generate gambar: ' + error.message 
+    });
   }
 }
