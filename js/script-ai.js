@@ -105,46 +105,43 @@ async function generateImage() {
     btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
     loader.style.display='inline-block';
 
-    // ... kode sebelumnya sama ...
+    try {
+        const width = window.currentW || 1024;
+        const height = window.currentH || 1024;
+        const seed = Math.floor(Math.random() * 1000000);
+        
+        // PERBAIKAN 1: HAPUS SPASI DI URL!
+        // Format: .../prompt/{teks}?width=...
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=turbo`;
 
-try {
-    const width = window.currentW || 1024;
-    const height = window.currentH || 1024;
-    const seed = Math.floor(Math.random() * 1000000);
-    
-    // PERUBAHAN DI SINI:
-    // Ganti 'model=flux' menjadi 'model=turbo'
-    // Turbo jauh lebih stabil, cepat, dan jarang kena block 530.
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=turbo`;
+        console.log("Fetching with Turbo Model:", imageUrl);
 
-    console.log("Fetching with Turbo Model:", imageUrl);
-
-    // Tetap pakai header User-Agent iPhone biar makin aman
-    const response = await fetch(imageUrl, {
-        method: 'GET',
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-            'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
-            'Referer': 'https://pollinations.ai/'
+        // PERBAIKAN 2: HAPUS SPASI DI REFERER
+        const response = await fetch(imageUrl, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+                'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+                'Referer': 'https://pollinations.ai/' // Spasi dihapus!
+            }
+        });
+        
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Server Error ${response.status}: ${errText.substring(0, 100)}`);
         }
-    });
-    
-    // ... sisa kode sama persis seperti sebelumnya ...
 
         const blob = await response.blob();
         
         // Validasi Ukuran Blob
         if (blob.size < 1000) {
-            throw new Error("Gambar terlalu kecil/rusak.");
+            throw new Error("Gambar terlalu kecil/rusak. Server mungkin menolak prompt ini.");
         }
 
-        // Buat URL Objek
         currentImgUrl = URL.createObjectURL(blob);
-        
         const img = document.getElementById('generatedImage');
         img.src = currentImgUrl;
         
-        // Saat gambar selesai dimuat browser
         img.onload = () => {
             loader.style.display='none'; 
             container.style.display='block'; 
@@ -155,7 +152,6 @@ try {
             console.log("Image generated successfully!");
         };
         
-        // Handle jika gambar gagal dimuat (onerror)
         img.onerror = () => {
             throw new Error("Gagal memuat gambar di browser.");
         };
