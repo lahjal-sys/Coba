@@ -83,80 +83,80 @@ function fillRandomPrompt() {
 // --- FUNGSI GENERATE GAMBAR (POLLINATIONS OFFICIAL API) ---
 
 async function generateImage() {
-    // 1. Ambil Prompt
-    const p = document.getElementById('imgPrompt').value.trim();
+    const input = document.getElementById('imgPrompt');
+    const p = input ? input.value.trim() : '';
     if(!p) return alert("Isi prompt dulu!");
 
-    // 2. Siap-siap UI (Loading)
     const btn = document.getElementById('genImgBtn');
     const loader = document.getElementById('imgLoader');
     const placeholder = document.getElementById('imgPlaceholder');
     const container = document.getElementById('imgContainer');
     const actions = document.getElementById('imgActions');
     
-    placeholder.style.display='none'; 
-    container.style.display='none'; 
-    actions.style.display='none'; 
+    if(!btn || !loader || !placeholder) return;
+    const t = translations[currentLang] || translations['en'];
+
+    // UI Reset
+    placeholder.style.display = 'none';
+    container.style.display = 'none';
+    actions.style.display = 'none';
     
     const originalText = btn.innerHTML;
-    btn.disabled = true; 
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menggambar...`;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
     loader.style.display='inline-block';
 
     try {
-        // 3. MASUKAN KEY KAMU DI SINI (Ganti teks di bawah ini!)
-        const DEEPAI_KEY = "5ecbae0a-c4aa-43ea-9700-62a531fad26f"; 
+        const w = window.currentW || 1024;
+        const h = window.currentH || 1024;
+        const seed = Math.floor(Math.random() * 1000000);
+        const model = window.currentModel || "flux";
 
-        // Cek kalau lupa ganti key
-        if(DEEPAI_KEY === "GANTI_DENGAN_KEY_ASLI_KAMU_DISINI") {
-            throw new Error("Hei! Kamu belum pasang API Key di kode script-ai.js!");
-        }
+        // URL BERSIH TANPA SPASI (Perbaikan dari kode temuanmu)
+        // Perhatikan: /prompt/ langsung diikuti encoded text
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${w}&height=${h}&seed=${seed}&nologo=true&model=${model}&enhance=true`;
 
-        // 4. Kirim Langsung ke DeepAI (Tanpa Perantara!)
-        const formData = new FormData();
-        formData.append('text', p);
+        console.log("Generating with URL:", imageUrl);
+
+        // CARA PALING STABIL: Fetch sebagai Blob dulu, baru ditampilkan
+        // Ini mencegah gambar "pecah" jika koneksi terputus di tengah
+        const response = await fetch(imageUrl);
         
-        const response = await fetch('https://api.deepai.org/api/text2img', {
-            method: 'POST',
-            headers: { 'api-key': DEEPAI_KEY },
-            body: formData
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || data.err) {
-            throw new Error(data.err || "DeepAI Error");
+        if (!response.ok) {
+            if (response.status === 530 || response.status === 503) {
+                throw new Error("Server Pollinations sedang sibuk (530). Tunggu 1 menit lalu coba lagi.");
+            }
+            throw new Error(`Error ${response.status}: Server menolak request.`);
         }
 
-        // 5. Download Gambarnya
-        const imgUrl = data.output_url;
-        const imgRes = await fetch(imgUrl);
-        const blob = await imgRes.blob();
+        const blob = await response.blob();
+        if (blob.size < 1000) throw new Error("Gambar rusak/kosong.");
 
-        // 6. Tampilkan!
         currentImgUrl = URL.createObjectURL(blob);
         const img = document.getElementById('generatedImage');
         img.src = currentImgUrl;
 
         img.onload = () => {
-            loader.style.display='none'; 
-            container.style.display='block'; 
-            actions.style.display='flex'; 
-            btn.disabled=false;
+            loader.style.display = 'none';
+            container.style.display = 'block';
+            actions.style.display = 'flex';
+            btn.disabled = false;
             btn.innerHTML = originalText;
             saveToGallery(currentImgUrl);
-            console.log("BERHASIL! Gambar muncul!");
+            console.log("✅ Success! Gambar muncul.");
         };
 
-    } catch(e) {
+    } catch (e) {
         console.error(e);
-        loader.style.display='none'; 
-        placeholder.style.display='block';
+        loader.style.display = 'none';
+        placeholder.style.display = 'block';
         placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}</span>`;
-        btn.disabled=false;
+        btn.disabled = false;
         btn.innerHTML = originalText;
     }
 }
+
+        
 
 // --- FUNGSI CHAT (GROQ API VIA BACKEND) ---
 async function sendChat() {
