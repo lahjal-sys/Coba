@@ -81,173 +81,79 @@ function fillRandomPrompt() {
 }
 
 // --- FUNGSI GENERATE GAMBAR (POLLINATIONS OFFICIAL API) ---
-async function generateImage() {
-    const input = document.getElementById('imgPrompt');
-    const p = input ? input.value.trim() : '';
-    if(!p) return alert("Please enter a prompt!");
 
+async function generateImage() {
+    // 1. Ambil Prompt
+    const p = document.getElementById('imgPrompt').value.trim();
+    if(!p) return alert("Isi prompt dulu!");
+
+    // 2. Siap-siap UI (Loading)
     const btn = document.getElementById('genImgBtn');
     const loader = document.getElementById('imgLoader');
     const placeholder = document.getElementById('imgPlaceholder');
     const container = document.getElementById('imgContainer');
     const actions = document.getElementById('imgActions');
     
-    if(!btn || !loader || !placeholder) return;
-    const t = translations[currentLang] || translations['en'];
-
-    // UI Reset
-    placeholder.style.display = 'none';
-    container.style.display = 'none';
-    actions.style.display = 'none';
+    placeholder.style.display='none'; 
+    container.style.display='none'; 
+    actions.style.display='none'; 
     
     const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
-    loader.style.display = 'inline-block';
-
-    // --- KONFIGURASI ---
-    const w = window.currentW || 1024;
-    const h = window.currentH || 1024;
-    const seed = Math.floor(Math.random() * 1000000);
-    const selectedModel = window.currentModel || "flux";
-    
-    // MASUKAN API KEY DEEPAI DI SINI (Untuk Lapisan Terakhir)
-    const DEEPAI_KEY = "5ecbae0a-c4aa-43ea-9700-62a531fad26f"; 
-
-    let blob = null;
-    let lastError = "";
+    btn.disabled = true; 
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menggambar...`;
+    loader.style.display='inline-block';
 
     try {
-        // ==========================================
-        // LAPISAN 1: POLLINATIONS ENTERPRISE (KEY)
-        // ==========================================
-        console.log("🛡️ Layer 1: Trying Pollinations Enterprise (Key)...");
-        try {
-            const proxyUrl = `/api/proxy-pollinations?prompt=${encodeURIComponent(p)}&width=${w}&height=${h}&seed=${seed}&model=${selectedModel}&nologo=true`;
-            
-            const res1 = await fetch(proxyUrl);
-            if (!res1.ok) throw new Error(`Status ${res1.status}`);
-            
-            blob = await res1.blob();
-            if(blob.size < 1000) throw new Error("Corrupt image");
-            
-            console.log("✅ Layer 1 Success!");
-        } catch (e) {
-            console.warn("⚠️ Layer 1 Failed:", e.message);
-            lastError = e.message;
-            // Lanjut ke Layer 2
+        // 3. MASUKAN KEY KAMU DI SINI (Ganti teks di bawah ini!)
+        const DEEPAI_KEY = "GANTI_DENGAN_KEY_ASLI_KAMU_DISINI"; 
+
+        // Cek kalau lupa ganti key
+        if(DEEPAI_KEY === "GANTI_DENGAN_KEY_ASLI_KAMU_DISINI") {
+            throw new Error("Hei! Kamu belum pasang API Key di kode script-ai.js!");
         }
 
-        // ==========================================
-        // LAPISAN 2: POLLINATIONS PUBLIK (NO KEY)
-        // ==========================================
-        if (!blob) {
-            console.log("🛡️ Layer 2: Trying Pollinations Public (No Key)...");
-            try {
-                const publicUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${w}&height=${h}&seed=${seed}&nologo=true&model=${selectedModel}`;
-                
-                const res2 = await fetch(publicUrl, { headers: { 'Accept': 'image/*' }});
-                if (!res2.ok) throw new Error(`Status ${res2.status}`);
-                
-                blob = await res2.blob();
-                if(blob.size < 1000) throw new Error("Corrupt image");
-
-                console.log("✅ Layer 2 Success!");
-            } catch (e) {
-                console.warn("⚠️ Layer 2 Failed:", e.message);
-                lastError = e.message;
-async function generateImage() {
-    const input = document.getElementById('imgPrompt');
-    const p = input ? input.value.trim() : '';
-    if(!p) return alert("Please enter a prompt!");
-
-    const btn = document.getElementById('genImgBtn');
-    const loader = document.getElementById('imgLoader');
-    const placeholder = document.getElementById('imgPlaceholder');
-    const container = document.getElementById('imgContainer');
-    const actions = document.getElementById('imgActions');
-    
-    if(!btn || !loader || !placeholder) return;
-    const t = translations[currentLang] || translations['en'];
-
-    // UI Reset
-    placeholder.style.display = 'none';
-    container.style.display = 'none';
-    actions.style.display = 'none';
-    
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
-    loader.style.display = 'inline-block';
-
-    // --- KONFIGURASI ---
-    // PASTIKAN KEY INI DIISI DENGAN BENAR!
-    const DEEPAI_KEY = "GANTI_DENGAN_KEY_ASLI_KAMU_DISINI"; 
-
-    if (DEEPAI_KEY === "GANTI_DENGAN_KEY_ASLI_KAMU_DISINI") {
-        alert("ERROR: Developer lupa memasukkan API Key DeepAI di kode!");
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        return;
-    }
-
-    try {
-        const w = Math.round((window.currentW || 512) / 32) * 32;
-        const h = Math.round((window.currentH || 512) / 32) * 32;
-
-        console.log("🚀 Sending DIRECTLY to DeepAI from Browser...");
-
+        // 4. Kirim Langsung ke DeepAI (Tanpa Perantara!)
         const formData = new FormData();
         formData.append('text', p);
-        formData.append('width', w);
-        formData.append('height', h);
-
-        // FETCH LANGSUNG DARI BROWSER KE DEEPAI (Bypass Vercel Totally)
+        
         const response = await fetch('https://api.deepai.org/api/text2img', {
             method: 'POST',
-            headers: {
-                'api-key': DEEPAI_KEY
-            },
+            headers: { 'api-key': DEEPAI_KEY },
             body: formData
         });
 
         const data = await response.json();
 
         if (!response.ok || data.err) {
-            throw new Error(data.err || `DeepAI Error: ${response.status}`);
+            throw new Error(data.err || "DeepAI Error");
         }
 
-        if (!data.output_url) {
-            throw new Error("No image URL returned");
-        }
-
-        // Download gambar
+        // 5. Download Gambarnya
         const imgUrl = data.output_url;
         const imgRes = await fetch(imgUrl);
         const blob = await imgRes.blob();
 
-        if (blob.size < 1000) throw new Error("Gambar rusak");
-
+        // 6. Tampilkan!
         currentImgUrl = URL.createObjectURL(blob);
         const img = document.getElementById('generatedImage');
         img.src = currentImgUrl;
 
         img.onload = () => {
-            loader.style.display = 'none';
-            container.style.display = 'block';
-            actions.style.display = 'flex';
-            btn.disabled = false;
+            loader.style.display='none'; 
+            container.style.display='block'; 
+            actions.style.display='flex'; 
+            btn.disabled=false;
             btn.innerHTML = originalText;
             saveToGallery(currentImgUrl);
-            console.log("✅ SUCCESS via Direct DeepAI!");
+            console.log("BERHASIL! Gambar muncul!");
         };
 
-    } catch (e) {
-        console.error("❌ FAILED:", e);
-        loader.style.display = 'none';
-        placeholder.style.display = 'block';
-        placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}<br><small>Pastikan API Key benar & Internet lancar.</small></span>`;
-        btn.disabled = false;
+    } catch(e) {
+        console.error(e);
+        loader.style.display='none'; 
+        placeholder.style.display='block';
+        placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}</span>`;
+        btn.disabled=false;
         btn.innerHTML = originalText;
     }
 }
