@@ -105,7 +105,7 @@ async function generateImage() {
 
     try {
         // 3. MASUKAN KEY KAMU DI SINI (Ganti teks di bawah ini!)
-        const DEEPAI_KEY = "GANTI_DENGAN_KEY_ASLI_KAMU_DISINI"; 
+        const DEEPAI_KEY = "5ecbae0a-c4aa-43ea-9700-62a531fad26f"; 
 
         // Cek kalau lupa ganti key
         if(DEEPAI_KEY === "GANTI_DENGAN_KEY_ASLI_KAMU_DISINI") {
