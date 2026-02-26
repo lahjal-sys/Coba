@@ -1,46 +1,17 @@
 // File: js/script-ai.js
-// VERSI FINAL: Fixed Random Prompt & Generate Button
+// CLEAN VERSION: Mengikuti Docs Resmi Pollinations & Groq
 
 let currentImgUrl = '';
 let currentLang = 'en';
 
-// --- TRANSLATIONS ---
 const translations = {
-    en: { 
-        ph_img: "A cyberpunk cat...", 
-        loading_gen: "Generating Image...", 
-        loading_chat: "Thinking...", 
-        err_gen: "Failed to generate image",
-        err_chat: "Chat failed"
-    },
-    id: { 
-        ph_img: "Kucing cyberpunk...", 
-        loading_gen: "Sedang Menggambar...", 
-        loading_chat: "Berpikir...", 
-        err_gen: "Gagal membuat gambar",
-        err_chat: "Chat gagal"
-    },
-    es: { 
-        ph_img: "Gato cyberpunk...", 
-        loading_gen: "Generando imagen...", 
-        loading_chat: "Pensando...", 
-        err_gen: "Error al generar",
-        err_chat: "Chat falló"
-    },
-    jp: { 
-        ph_img: "サイバーパンクな猫...", 
-        loading_gen: "生成中...", 
-        loading_chat: "考え中...", 
-        err_gen: "生成エラー",
-        err_chat: "チャット失敗"
-    }
+    en: { ph_img: "A cyberpunk cat...", loading_gen: "Generating...", loading_chat: "Thinking...", err_gen: "Failed", err_chat: "Chat Error" },
+    id: { ph_img: "Kucing cyberpunk...", loading_gen: "Menggambar...", loading_chat: "Berpikir...", err_gen: "Gagal", err_chat: "Gagal Chat" },
+    es: { ph_img: "Gato cyberpunk...", loading_gen: "Generando...", loading_chat: "Pensando...", err_gen: "Error", err_chat: "Error Chat" },
+    jp: { ph_img: "猫...", loading_gen: "生成中...", loading_chat: "考え中...", err_gen: "エラー", err_chat: "チャットエラー" }
 };
 
-// Wait for DOM to be ready
 window.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM Loaded. Initializing...");
-    
-    // Cek apakah elemen ada sebelum menjalankan fungsi
     if(document.getElementById('themeBtn')) loadTheme();
     if(document.getElementById('galleryGrid')) loadGallery();
     if(document.getElementById('langSelect')) changeLanguage();
@@ -50,159 +21,130 @@ function loadTheme() {
     const t = localStorage.getItem('viralScopeTheme');
     const btn = document.getElementById('themeBtn');
     if(!btn) return;
-    if(t==='light'){document.body.setAttribute('data-theme','light'); btn.innerText='☀️';}
-    else{document.body.removeAttribute('data-theme'); btn.innerText='🌙';}
+    document.body.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+    btn.innerText = t === 'light' ? '☀️' : '🌙';
 }
 
 function toggleTheme() {
-    const isDark = document.body.getAttribute('data-theme') !== 'light';
-    const btn = document.getElementById('themeBtn');
-    if(!btn) return;
-    if(isDark){document.body.setAttribute('data-theme','light'); btn.innerText='☀️'; localStorage.setItem('viralScopeTheme','light');}
-    else{document.body.removeAttribute('data-theme'); btn.innerText='🌙'; localStorage.setItem('viralScopeTheme','dark');}
+    const isLight = document.body.getAttribute('data-theme') === 'light';
+    const newTheme = isLight ? 'dark' : 'light';
+    document.body.setAttribute('data-theme', newTheme);
+    document.getElementById('themeBtn').innerText = newTheme === 'light' ? '☀️' : '🌙';
+    localStorage.setItem('viralScopeTheme', newTheme);
 }
 
-function toggleMenu() { 
+function toggleMenu() {
     const menu = document.getElementById('dropdownMenu');
-    if(menu) menu.classList.toggle('active'); 
+    if(menu) menu.classList.toggle('active');
 }
 
 function switchTab(t) {
-    document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));
-    const tab = document.getElementById(`tab-${t}`);
-    if(tab) tab.classList.add('active');
-    if(event && event.currentTarget) event.currentTarget.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+    document.getElementById(`tab-${t}`).classList.add('active');
+    if(event.currentTarget) event.currentTarget.classList.add('active');
 }
 
 function changeLanguage() {
-    const select = document.getElementById('langSelect');
-    if(!select) return;
-    
-    const l = select.value;
+    const l = document.getElementById('langSelect').value;
     currentLang = l;
     const t = translations[l];
-    
     const ph = document.getElementById('imgPrompt');
-    if(ph && t) {
-        ph.placeholder = t.ph_img;
-    }
+    if(ph && t) ph.placeholder = t.ph_img;
 }
 
-function setRatio(w,h,b) {
-    document.querySelectorAll('.ratio-btn').forEach(e=>e.classList.remove('active'));
-    if(b) b.classList.add('active');
-    window.currentW = w; 
+function setRatio(w, h, btn) {
+    document.querySelectorAll('.ratio-btn').forEach(e => e.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    window.currentW = w;
     window.currentH = h;
-    console.log(`Ratio set to ${w}x${h}`);
 }
-// Default Ratio
-window.currentW = 1024; 
+window.currentW = 1024;
 window.currentH = 1024;
 
-const randoms = ["Cyberpunk cat", "Astronaut on horse", "Flower dragon", "Steampunk robot", "Neon city", "Magic forest"];
-
-function fillRandomPrompt() { 
+const randomPrompts = ["Cyberpunk cat", "Astronaut on horse", "Flower dragon", "Steampunk robot", "Neon city"];
+function fillRandomPrompt() {
     const input = document.getElementById('imgPrompt');
-    if(!input) return;
-    
-    const randomText = randoms[Math.floor(Math.random()*randoms.length)];
-    input.value = randomText;
-    console.log("Random prompt filled:", randomText);
+    if(input) input.value = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
 }
 
+// --- FUNGSI GENERATE GAMBAR (POLLINATIONS OFFICIAL API) ---
 async function generateImage() {
-    console.log("Generate button clicked!");
-    
     const input = document.getElementById('imgPrompt');
-    if(!input) { alert("Error: Input field not found!"); return; }
-    
-    const p = input.value.trim();
-    if(!p) {
-        alert("Please enter a prompt or click Random!");
-        return;
-    }
-    
+    const p = input ? input.value.trim() : '';
+    if(!p) return alert("Please enter a prompt!");
+
     const btn = document.getElementById('genImgBtn');
     const loader = document.getElementById('imgLoader');
     const placeholder = document.getElementById('imgPlaceholder');
     const container = document.getElementById('imgContainer');
     const actions = document.getElementById('imgActions');
     
-    // Validasi elemen UI
-    if(!btn || !loader || !placeholder) {
-        console.error("UI Elements missing!");
-        return;
-    }
+    if(!btn || !loader || !placeholder) return;
 
     const t = translations[currentLang] || translations['en'];
+
+    // UI Reset
+    placeholder.style.display = 'none';
+    container.style.display = 'none';
+    actions.style.display = 'none';
     
-    // Reset UI
-    placeholder.style.display='none'; 
-    container.style.display='none'; 
-    actions.style.display='none'; 
-    
-    const originalBtnText = btn.innerHTML;
-    btn.disabled = true; 
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
     btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
-    loader.style.display='inline-block';
+    loader.style.display = 'inline-block';
 
     try {
-        const width = window.currentW || 1024;
-        const height = window.currentH || 1024;
+        const w = window.currentW || 1024;
+        const h = window.currentH || 1024;
         const seed = Math.floor(Math.random() * 1000000);
-        
-        // URL POLLINATIONS OFFICIAL
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
 
-        console.log("Fetching:", imageUrl);
+        // URL RESMI POLLINATIONS (Tanpa API Key, Tanpa Proxy)
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${w}&height=${h}&seed=${seed}&nologo=true&model=flux`;
 
-        const response = await fetch(imageUrl, {
-            method: 'GET',
-            headers: { 'Accept': 'image/*' }
-        });
+        console.log("Fetching from Pollinations:", url);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Pollinations Error ${response.status}: ${errorText.substring(0, 100)}`);
+        // Request Sederhana (Sesuai Docs)
+        const res = await fetch(url);
+
+        if (!res.ok) {
+            const err = await res.text();
+            if(err.includes("530") || err.includes("1033")) {
+                throw new Error("Server sedang sibuk (530). Coba lagi dalam 1 menit.");
+            }
+            throw new Error(`Error ${res.status}: ${err.substring(0, 50)}`);
         }
 
-        const blob = await response.blob();
-        
-        if (blob.size < 1000) {
-            throw new Error("Gambar terlalu kecil/rusak.");
-        }
+        const blob = await res.blob();
+        if(blob.size < 1000) throw new Error("Gambar rusak/kosong.");
 
         currentImgUrl = URL.createObjectURL(blob);
         const img = document.getElementById('generatedImage');
-        if(!img) throw new Error("Image element not found!");
-        
         img.src = currentImgUrl;
-        
+
         img.onload = () => {
-            loader.style.display='none'; 
-            container.style.display='block'; 
-            if(actions) actions.style.display='flex'; 
-            btn.disabled=false;
-            btn.innerHTML = originalBtnText;
+            loader.style.display = 'none';
+            container.style.display = 'block';
+            actions.style.display = 'flex';
+            btn.disabled = false;
+            btn.innerHTML = originalText;
             saveToGallery(currentImgUrl);
-            console.log("✅ Success!");
         };
 
-    } catch(e) {
-        console.error("❌ Error:", e);
-        loader.style.display='none'; 
-        placeholder.style.display='block';
+    } catch (e) {
+        console.error(e);
+        loader.style.display = 'none';
+        placeholder.style.display = 'block';
         placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}</span>`;
-        btn.disabled=false;
-        btn.innerHTML = originalBtnText;
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 
+// --- FUNGSI CHAT (GROQ API VIA BACKEND) ---
 async function sendChat() {
     const inp = document.getElementById('chatInput');
-    if(!inp) return;
-    const txt = inp.value.trim();
+    const txt = inp ? inp.value.trim() : '';
     if(!txt) return;
 
     const box = document.getElementById('chatBox');
@@ -213,46 +155,52 @@ async function sendChat() {
     box.scrollTop = box.scrollHeight;
 
     const t = translations[currentLang] || translations['en'];
-    const loadingId = 'loading-' + Date.now();
-    box.innerHTML += `<div class="message ai" id="${loadingId}"><i class="fas fa-spinner fa-spin"></i> ${t.loading_chat}</div>`;
+    const id = 'msg-' + Date.now();
+    box.innerHTML += `<div class="message ai" id="${id}"><i class="fas fa-spinner fa-spin"></i> ${t.loading_chat}</div>`;
     box.scrollTop = box.scrollHeight;
 
     try {
-        const response = await fetch('/api/send-chat', {
+        const res = await fetch('/api/send-chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ inputs: txt })
         });
 
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || 'Gagal chat');
+        // Cek Content-Type sebelum parse JSON
+        const contentType = res.headers.get("content-type");
+        let data;
+
+        if (contentType && contentType.includes("application/json")) {
+            data = await res.json();
+        } else {
+            const textErr = await res.text();
+            throw new Error(`Server Error: ${textErr.substring(0, 100)}`);
         }
 
-        const data = await response.json();
-        let reply = "Maaf, saya tidak mengerti.";
-        
-        if (data && data.result) {
-            reply = data.result.trim(); 
+        if (!res.ok) {
+            throw new Error(data.message || "Chat failed");
         }
 
-        const replyEl = document.getElementById(loadingId);
-        if(replyEl) replyEl.innerText = reply;
+        const replyEl = document.getElementById(id);
+        if(replyEl) {
+            replyEl.innerText = (data && data.result) ? data.result.trim() : "No response.";
+        }
 
-    } catch(e) {
+    } catch (e) {
         console.error(e);
-        const replyEl = document.getElementById(loadingId);
-        if(replyEl) replyEl.innerText = "⚠️ Error: " + e.message;
+        const replyEl = document.getElementById(id);
+        if(replyEl) replyEl.innerText = `⚠️ ${e.message}`;
     }
 }
 
+// --- GALERI & UTILS ---
 function saveToGallery(url) {
-    if (!url) return;
+    if(!url) return;
     let g = JSON.parse(localStorage.getItem('vs_g') || '[]');
-    if (!g.includes(url)) {
-        g.unshift(url); 
-        if(g.length>6) g.pop();
-        localStorage.setItem('vs_g', JSON.stringify(g)); 
+    if(!g.includes(url)) {
+        g.unshift(url);
+        if(g.length > 6) g.pop();
+        localStorage.setItem('vs_g', JSON.stringify(g));
         loadGallery();
     }
 }
@@ -261,62 +209,57 @@ function loadGallery() {
     let g = JSON.parse(localStorage.getItem('vs_g') || '[]');
     const grid = document.getElementById('galleryGrid');
     const sec = document.getElementById('gallerySection');
-    if (!grid) return;
+    if(!grid) return;
     
-    grid.innerHTML='';
-    
-    if(g.length>0 && g[0] !== ''){
-        if(sec) sec.style.display='block';
-        g.forEach((u, index) => {
-            if (!u) return;
-            const d=document.createElement('div'); 
-            d.className='gallery-item';
-            d.innerHTML = `<img src="${u}" alt="Art ${index}" onclick="viewImage('${u}')">`; 
+    grid.innerHTML = '';
+    if(g.length > 0 && g[0]) {
+        if(sec) sec.style.display = 'block';
+        g.forEach(u => {
+            const d = document.createElement('div');
+            d.className = 'gallery-item';
+            d.innerHTML = `<img src="${u}" onclick="viewImage('${u}')">`;
             grid.appendChild(d);
         });
     } else {
-        if(sec) sec.style.display='none';
+        if(sec) sec.style.display = 'none';
     }
 }
 
 function viewImage(u) {
-    if (!u) return;
+    if(!u) return;
     currentImgUrl = u;
-    const imgElement = document.getElementById('generatedImage');
+    const img = document.getElementById('generatedImage');
     const container = document.getElementById('imgContainer');
     const placeholder = document.getElementById('imgPlaceholder');
     const loader = document.getElementById('imgLoader');
     const actions = document.getElementById('imgActions');
 
-    if(!imgElement || !container) return;
-
-    imgElement.src = u;
+    if(img) img.src = u;
     if(placeholder) placeholder.style.display = 'none';
     if(loader) loader.style.display = 'none';
-    container.style.display = 'block';
-    if(actions) actions.style.display = 'flex';
-    
-    setTimeout(() => {
+    if(container) {
+        container.style.display = 'block';
         container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
+    }
+    if(actions) actions.style.display = 'flex';
 }
 
-function downloadImage() { 
-    if(!currentImgUrl) return; 
-    const a=document.createElement('a'); 
-    a.href=currentImgUrl; 
-    a.download='viral-scope-' + Date.now() + '.png'; 
-    document.body.appendChild(a); 
-    a.click(); 
-    document.body.removeChild(a); 
+function downloadImage() {
+    if(!currentImgUrl) return;
+    const a = document.createElement('a');
+    a.href = currentImgUrl;
+    a.download = `viral-${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
-function shareImage() { 
-    if(!currentImgUrl) return; 
-    navigator.clipboard.writeText(currentImgUrl); 
+function shareImage() {
+    if(!currentImgUrl) return;
+    navigator.clipboard.writeText(currentImgUrl);
     const toast = document.getElementById('toast');
     if(toast) {
-        toast.className='show'; 
-        setTimeout(()=>toast.className='',3000); 
+        toast.className = 'show';
+        setTimeout(() => toast.className = '', 3000);
     }
 }
