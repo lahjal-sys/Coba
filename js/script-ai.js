@@ -112,7 +112,7 @@ async function generateImage() {
     const selectedModel = window.currentModel || "flux";
     
     // MASUKAN API KEY DEEPAI DI SINI (Untuk Lapisan Terakhir)
-    const DEEPAI_KEY = "MASUKKAN_KEY_DEEPAI_DISINI"; 
+    const DEEPAI_KEY = "5ecbae0a-c4aa-43ea-9700-62a531fad26f"; 
 
     let blob = null;
     let lastError = "";
