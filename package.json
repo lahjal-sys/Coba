@@ -1,1 +1,13 @@
-sdf
+{
+  "name": "viral-scope-ai",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed for static + API'",
+    "start": "vercel start"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
