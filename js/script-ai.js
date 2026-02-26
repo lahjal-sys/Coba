@@ -93,7 +93,6 @@ async function generateImage() {
     const actions = document.getElementById('imgActions');
     
     if(!btn || !loader || !placeholder) return;
-
     const t = translations[currentLang] || translations['en'];
 
     // UI Reset
@@ -106,32 +105,100 @@ async function generateImage() {
     btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
     loader.style.display = 'inline-block';
 
+    // --- KONFIGURASI ---
+    const w = window.currentW || 1024;
+    const h = window.currentH || 1024;
+    const seed = Math.floor(Math.random() * 1000000);
+    const selectedModel = window.currentModel || "flux";
+    
+    // MASUKAN API KEY DEEPAI DI SINI (Untuk Lapisan Terakhir)
+    const DEEPAI_KEY = "MASUKKAN_KEY_DEEPAI_DISINI"; 
+
+    let blob = null;
+    let lastError = "";
+
     try {
-        const w = window.currentW || 1024;
-        const h = window.currentH || 1024;
-        const seed = Math.floor(Math.random() * 1000000);
-
-        // URL RESMI POLLINATIONS (Tanpa API Key, Tanpa Proxy)
-        // Gunakan model yang dipilih user, fallback ke flux jika kosong
-const selectedModel = window.currentModel || "flux";
-const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${w}&height=${h}&seed=${seed}&nologo=true&model=${selectedModel}`;
-console.log(`Generating with model: ${selectedModel}`);
-        console.log("Fetching from Pollinations:", url);
-
-        // Request Sederhana (Sesuai Docs)
-        const res = await fetch(url);
-
-        if (!res.ok) {
-            const err = await res.text();
-            if(err.includes("530") || err.includes("1033")) {
-                throw new Error("Server sedang sibuk (530). Coba lagi dalam 1 menit.");
-            }
-            throw new Error(`Error ${res.status}: ${err.substring(0, 50)}`);
+        // ==========================================
+        // LAPISAN 1: POLLINATIONS ENTERPRISE (KEY)
+        // ==========================================
+        console.log("🛡️ Layer 1: Trying Pollinations Enterprise (Key)...");
+        try {
+            const proxyUrl = `/api/proxy-pollinations?prompt=${encodeURIComponent(p)}&width=${w}&height=${h}&seed=${seed}&model=${selectedModel}&nologo=true`;
+            
+            const res1 = await fetch(proxyUrl);
+            if (!res1.ok) throw new Error(`Status ${res1.status}`);
+            
+            blob = await res1.blob();
+            if(blob.size < 1000) throw new Error("Corrupt image");
+            
+            console.log("✅ Layer 1 Success!");
+        } catch (e) {
+            console.warn("⚠️ Layer 1 Failed:", e.message);
+            lastError = e.message;
+            // Lanjut ke Layer 2
         }
 
-        const blob = await res.blob();
-        if(blob.size < 1000) throw new Error("Gambar rusak/kosong.");
+        // ==========================================
+        // LAPISAN 2: POLLINATIONS PUBLIK (NO KEY)
+        // ==========================================
+        if (!blob) {
+            console.log("🛡️ Layer 2: Trying Pollinations Public (No Key)...");
+            try {
+                const publicUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${w}&height=${h}&seed=${seed}&nologo=true&model=${selectedModel}`;
+                
+                const res2 = await fetch(publicUrl, { headers: { 'Accept': 'image/*' }});
+                if (!res2.ok) throw new Error(`Status ${res2.status}`);
+                
+                blob = await res2.blob();
+                if(blob.size < 1000) throw new Error("Corrupt image");
 
+                console.log("✅ Layer 2 Success!");
+            } catch (e) {
+                console.warn("⚠️ Layer 2 Failed:", e.message);
+                lastError = e.message;
+                // Lanjut ke Layer 3
+            }
+        }
+
+        // ==========================================
+        // LAPISAN 3: DEEPAI (FALLBACK FINAL)
+        // ==========================================
+        if (!blob) {
+            console.log("🛡️ Layer 3: Trying DeepAI (Last Resort)...");
+            if (DEEPAI_KEY === "MASUKKAN_KEY_DEEPAI_DISINI") {
+                throw new Error("Semua server Pollinations down & DeepAI Key belum diatur.");
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('text', p);
+                formData.append('width', w);
+                formData.append('height', h);
+
+                const res3 = await fetch('https://api.deepai.org/api/text2img', {
+                    method: 'POST',
+                    headers: { 'api-key': DEEPAI_KEY },
+                    body: formData
+                });
+
+                const data3 = await res3.json();
+                if (!res3.ok || data3.err) throw new Error(data3.err || "DeepAI Error");
+                if (!data3.output_url) throw new Error("No URL");
+
+                const imgRes = await fetch(data3.output_url);
+                blob = await imgRes.blob();
+                if(blob.size < 1000) throw new Error("Corrupt image");
+
+                console.log("✅ Layer 3 Success!");
+            } catch (e) {
+                console.error("❌ Layer 3 Failed:", e.message);
+                throw new Error(`Semua generator gagal. Terakhir: ${e.message}`);
+            }
+        }
+
+        // ==========================================
+        // TAMPILKAN GAMBAR (SU KSES)
+        // ==========================================
         currentImgUrl = URL.createObjectURL(blob);
         const img = document.getElementById('generatedImage');
         img.src = currentImgUrl;
@@ -143,13 +210,14 @@ console.log(`Generating with model: ${selectedModel}`);
             btn.disabled = false;
             btn.innerHTML = originalText;
             saveToGallery(currentImgUrl);
+            console.log("🎉 Image Generated Successfully!");
         };
 
     } catch (e) {
-        console.error(e);
+        console.error("💀 ALL LAYERS FAILED:", e);
         loader.style.display = 'none';
         placeholder.style.display = 'block';
-        placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}</span>`;
+        placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}<br><small>Coba lagi nanti.</small></span>`;
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
