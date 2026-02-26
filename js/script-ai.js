@@ -61,7 +61,19 @@ function setRatio(w, h, btn) {
 }
 window.currentW = 1024;
 window.currentH = 1024;
+window.currentModel = "flux"; // Default model
 
+// Fungsi baru untuk menyimpan pilihan model
+function setModel(modelName) {
+    window.currentModel = modelName;
+    console.log("Model changed to:", modelName);
+    
+    // Opsional: Beri tahu user jika pilih Turbo
+    if(modelName === 'turbo') {
+        // Bisa tambah toast notification kecil disini kalau mau
+        console.log("Switched to Fast Mode!");
+    }
+}
 const randomPrompts = ["Cyberpunk cat", "Astronaut on horse", "Flower dragon", "Steampunk robot", "Neon city"];
 function fillRandomPrompt() {
     const input = document.getElementById('imgPrompt');
