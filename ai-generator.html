@@ -102,7 +102,51 @@
         </div>
     </div>
     <div id="toast">✅ Copied!</div>
+<!-- === TAMBAHAN POLLINATIONS AI (AMAN, NO KONFLIK) === -->
+<div style="margin: 30px auto; max-width: 800px; padding: 25px; background: #f8f9fa; border-radius: 16px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+  <h2 style="margin-bottom: 20px; color: #6b21a8;">🚀 Generate Gambar AI Gratis (Pollinations Flux)</h2>
+  <input 
+    type="text" 
+    id="pollinPrompt" 
+    placeholder="Contoh: anak kucing di sawah Yogyakarta, anime style, sunset" 
+    style="width: 100%; max-width: 600px; padding: 16px; font-size: 16px; border: 2px solid #ddd; border-radius: 12px;">
+  <br><br>
+  <button 
+    onclick="generatePollinationsImage()" 
+    style="padding: 14px 40px; font-size: 18px; background: linear-gradient(135deg, #6b21a8, #a855f7); color: white; border: none; border-radius: 12px; cursor: pointer;">
+    Generate Sekarang (Flux)
+  </button>
+  <div id="pollinResult" style="margin-top: 25px; min-height: 120px;"></div>
+</div>
 
+<script>
+async function generatePollinationsImage() {
+  const prompt = document.getElementById('pollinPrompt').value.trim();
+  const resultDiv = document.getElementById('pollinResult');
+  
+  if (!prompt) {
+    resultDiv.innerHTML = '<p style="color:red;">Masukkan deskripsi dulu ya!</p>';
+    return;
+  }
+
+  resultDiv.innerHTML = '<p>Sedang generate gambar AI (5-10 detik)... Flux model</p>';
+
+  const url = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?model=flux&width=1024&height=1024&seed=${Math.floor(Math.random()*999999)}&enhance=true`;
+
+  try {
+    const img = document.createElement('img');
+    img.src = url;
+    img.style.maxWidth = '100%';
+    img.style.borderRadius = '12px';
+    img.style.boxShadow = '0 10px 30px rgba(107,33,168,0.2)';
+    resultDiv.innerHTML = '';
+    resultDiv.appendChild(img);
+  } catch(e) {
+    resultDiv.innerHTML = '<p style="color:red;">Gagal, coba lagi atau refresh!</p>';
+  }
+}
+</script>
+<!-- === END TAMBAHAN === -->
     <!-- PERBAIKAN 3: Tambahkan '/' di depan src -->
     <script src="/js/script-ai.js"></script>
 </body>
