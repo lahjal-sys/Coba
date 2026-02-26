@@ -156,49 +156,78 @@ async function generateImage() {
             } catch (e) {
                 console.warn("⚠️ Layer 2 Failed:", e.message);
                 lastError = e.message;
-                // Lanjut ke Layer 3
-            }
+async function generateImage() {
+    const input = document.getElementById('imgPrompt');
+    const p = input ? input.value.trim() : '';
+    if(!p) return alert("Please enter a prompt!");
+
+    const btn = document.getElementById('genImgBtn');
+    const loader = document.getElementById('imgLoader');
+    const placeholder = document.getElementById('imgPlaceholder');
+    const container = document.getElementById('imgContainer');
+    const actions = document.getElementById('imgActions');
+    
+    if(!btn || !loader || !placeholder) return;
+    const t = translations[currentLang] || translations['en'];
+
+    // UI Reset
+    placeholder.style.display = 'none';
+    container.style.display = 'none';
+    actions.style.display = 'none';
+    
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t.loading_gen}`;
+    loader.style.display = 'inline-block';
+
+    // --- KONFIGURASI ---
+    // PASTIKAN KEY INI DIISI DENGAN BENAR!
+    const DEEPAI_KEY = "GANTI_DENGAN_KEY_ASLI_KAMU_DISINI"; 
+
+    if (DEEPAI_KEY === "GANTI_DENGAN_KEY_ASLI_KAMU_DISINI") {
+        alert("ERROR: Developer lupa memasukkan API Key DeepAI di kode!");
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        return;
+    }
+
+    try {
+        const w = Math.round((window.currentW || 512) / 32) * 32;
+        const h = Math.round((window.currentH || 512) / 32) * 32;
+
+        console.log("🚀 Sending DIRECTLY to DeepAI from Browser...");
+
+        const formData = new FormData();
+        formData.append('text', p);
+        formData.append('width', w);
+        formData.append('height', h);
+
+        // FETCH LANGSUNG DARI BROWSER KE DEEPAI (Bypass Vercel Totally)
+        const response = await fetch('https://api.deepai.org/api/text2img', {
+            method: 'POST',
+            headers: {
+                'api-key': DEEPAI_KEY
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.err) {
+            throw new Error(data.err || `DeepAI Error: ${response.status}`);
         }
 
-        // ==========================================
-        // LAPISAN 3: DEEPAI (FALLBACK FINAL)
-        // ==========================================
-        if (!blob) {
-            console.log("🛡️ Layer 3: Trying DeepAI (Last Resort)...");
-            if (DEEPAI_KEY === "MASUKKAN_KEY_DEEPAI_DISINI") {
-                throw new Error("Semua server Pollinations down & DeepAI Key belum diatur.");
-            }
-            
-            try {
-                const formData = new FormData();
-                formData.append('text', p);
-                formData.append('width', w);
-                formData.append('height', h);
-
-                const res3 = await fetch('https://api.deepai.org/api/text2img', {
-                    method: 'POST',
-                    headers: { 'api-key': DEEPAI_KEY },
-                    body: formData
-                });
-
-                const data3 = await res3.json();
-                if (!res3.ok || data3.err) throw new Error(data3.err || "DeepAI Error");
-                if (!data3.output_url) throw new Error("No URL");
-
-                const imgRes = await fetch(data3.output_url);
-                blob = await imgRes.blob();
-                if(blob.size < 1000) throw new Error("Corrupt image");
-
-                console.log("✅ Layer 3 Success!");
-            } catch (e) {
-                console.error("❌ Layer 3 Failed:", e.message);
-                throw new Error(`Semua generator gagal. Terakhir: ${e.message}`);
-            }
+        if (!data.output_url) {
+            throw new Error("No image URL returned");
         }
 
-        // ==========================================
-        // TAMPILKAN GAMBAR (SU KSES)
-        // ==========================================
+        // Download gambar
+        const imgUrl = data.output_url;
+        const imgRes = await fetch(imgUrl);
+        const blob = await imgRes.blob();
+
+        if (blob.size < 1000) throw new Error("Gambar rusak");
+
         currentImgUrl = URL.createObjectURL(blob);
         const img = document.getElementById('generatedImage');
         img.src = currentImgUrl;
@@ -210,14 +239,14 @@ async function generateImage() {
             btn.disabled = false;
             btn.innerHTML = originalText;
             saveToGallery(currentImgUrl);
-            console.log("🎉 Image Generated Successfully!");
+            console.log("✅ SUCCESS via Direct DeepAI!");
         };
 
     } catch (e) {
-        console.error("💀 ALL LAYERS FAILED:", e);
+        console.error("❌ FAILED:", e);
         loader.style.display = 'none';
         placeholder.style.display = 'block';
-        placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}<br><small>Coba lagi nanti.</small></span>`;
+        placeholder.innerHTML = `<span style="color:#ff4444">❌ ${e.message}<br><small>Pastikan API Key benar & Internet lancar.</small></span>`;
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
