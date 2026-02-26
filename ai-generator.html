@@ -51,6 +51,16 @@
                     <button class="ratio-btn" onclick="setRatio(1344,768,this)">16:9</button>
                 </div>
             </div>
+            <!-- TAMBAHKAN INI DI DEKAT AREA INPUT/RASIO -->
+<div class="tools-row" style="margin-top: 15px; justify-content: center;">
+    <label for="modelSelect" style="color: var(--text-sec); font-size: 0.9rem; margin-right: 10px;">🎨 Model:</label>
+    <select id="modelSelect" class="lang-select" onchange="setModel(this.value)">
+        <option value="flux">Flux (Best Quality)</option>
+        <option value="turbo">Turbo (Fastest)</option>
+        <option value="realistic">Realistic (Photo)</option>
+        <option value="anime">Anime Style</option>
+    </select>
+</div>
             <button class="action-btn-main" id="genImgBtn" onclick="generateImage()">✨ Generate</button>
             
             <div class="result-area">
