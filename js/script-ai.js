@@ -112,8 +112,10 @@ async function generateImage() {
         const seed = Math.floor(Math.random() * 1000000);
 
         // URL RESMI POLLINATIONS (Tanpa API Key, Tanpa Proxy)
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${w}&height=${h}&seed=${seed}&nologo=true&model=flux`;
-
+        // Gunakan model yang dipilih user, fallback ke flux jika kosong
+const selectedModel = window.currentModel || "flux";
+const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=${w}&height=${h}&seed=${seed}&nologo=true&model=${selectedModel}`;
+console.log(`Generating with model: ${selectedModel}`);
         console.log("Fetching from Pollinations:", url);
 
         // Request Sederhana (Sesuai Docs)
