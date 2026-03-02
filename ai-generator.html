@@ -3,107 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Studio - ViralScope</title>
-    <!-- PERBAIKAN 1: Hapus spasi di akhir URL -->
+    <title>AI Generator - Ai Trends</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- PERBAIKAN 2: Tambahkan '/' di depan -->
-    <link rel="stylesheet" href="/css/style-main.css">
-    
-    <!-- Tambahan Style Khusus AI jika perlu (Opsional, kalau style-main.css belum cukup) -->
-    <link rel="stylesheet" href="/css/style-ai.css">
+    <link rel="stylesheet" href="css/style-ai.css">
 </head>
 <body>
+    <!-- Navigation -->
     <nav>
-        <div class="nav-left"><a href="index.html" class="logo">⚡ ViralScope</a></div>
+        <div class="nav-left">
+            <a href="index.html" class="logo">⚡ Ai Trends</a>
+        </div>
         <div class="nav-right">
             <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
-            <div class="hamburger" onclick="toggleMenu()"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+            <div class="hamburger" onclick="toggleMenu()">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
         </div>
     </nav>
+
+    <!-- Dropdown Menu -->
     <div class="dropdown-menu" id="dropdownMenu">
         <a class="menu-item" href="index.html" onclick="toggleMenu()">Home 🏠</a>
         <a class="menu-item" href="ai-generator.html" onclick="toggleMenu()" style="color:var(--primary)">AI Studio 🤖</a>
-        <a class="menu-item" href="https://runwayml.com" target="_blank" onclick="toggleMenu()">Video AI 🎥</a>
-        <div style="padding:15px 10px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;">
+        <div style="padding:15px 10px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
             <span style="color:var(--text); font-weight:600;">Language</span>
             <select id="langSelect" class="lang-select" onchange="changeLanguage()">
-                <option value="en">🇺🇸 EN</option><option value="id">🇮🇩 ID</option><option value="es">🇪🇸 ES</option><option value="jp">🇯🇵 JP</option>
+                <option value="en">🇺🇸 EN</option>
+                <option value="id">🇮🇩 ID</option>
+                <option value="es">🇪🇸 ES</option>
+                <option value="jp">🇯🇵 JP</option>
             </select>
         </div>
     </div>
 
+    <!-- Main Container -->
     <div class="container">
+        <!-- Tabs -->
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('image')">🎨 Image</button>
-            <button class="tab-btn" onclick="switchTab('chat')">💬 Chat</button>
         </div>
 
-        <!-- IMAGE TAB -->
+        <!-- Image Tab -->
         <div id="tab-image" class="tab-content active">
             <h1>AI Image Generator</h1>
-            <p class="subtitle">Powered by Stable Diffusion XL</p>
+            <p class="subtitle">Powered by Pollinations AI • Model: Flux</p>
+            
+            <!-- Free Tier Display -->
+            <div id="freeTierDisplay"></div>
+            
+            <!-- Prompt -->
             <textarea id="imgPrompt" class="prompt-area" placeholder="A cyberpunk cat..."></textarea>
+            
+            <!-- Tools -->
             <div class="tools-row">
                 <button class="random-btn" onclick="fillRandomPrompt()">🎲 Random</button>
-                <div style="display:flex; gap:5px;">
+                <div class="ratio-row" style="display:flex; gap:5px;">
                     <button class="ratio-btn active" onclick="setRatio(1024,1024,this)">1:1</button>
                     <button class="ratio-btn" onclick="setRatio(768,1344,this)">9:16</button>
                     <button class="ratio-btn" onclick="setRatio(1344,768,this)">16:9</button>
                 </div>
             </div>
-            <!-- TAMBAHKAN INI DI DEKAT AREA INPUT/RASIO -->
-<div class="tools-row" style="margin-top: 15px; justify-content: center;">
-    <label for="modelSelect" style="color: var(--text-sec); font-size: 0.9rem; margin-right: 10px;">🎨 Model:</label>
-    <select id="modelSelect" class="lang-select" onchange="setModel(this.value)">
-        <option value="flux">Flux (Best Quality)</option>
-        <option value="turbo">Turbo (Fastest)</option>
-        <option value="realistic">Realistic (Photo)</option>
-        <option value="anime">Anime Style</option>
-    </select>
-</div>
+            
+            <!-- Generate Button -->
             <button class="action-btn-main" id="genImgBtn" onclick="generateImage()">✨ Generate</button>
             
+            <!-- Result -->
             <div class="result-area">
-    <!-- 1. Placeholder (Teks "Art will appear here") -->
-    <div id="imgPlaceholder" class="placeholder-box">
-        <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
-        <p>Art will appear here</p>
-    </div>
-
-    <!-- 2. Loader (Harus ada di sini, di antara placeholder dan gambar) -->
-    <div class="loader" id="imgLoader"></div>
-    
-    <!-- 3. Container Gambar (Default display: none) -->
-    <div class="image-container" id="imgContainer">
-        <img id="generatedImage" src="" alt="AI Art">
-    </div>
-
-    <!-- 4. Tombol Aksi -->
-    <div class="action-buttons" id="imgActions">
-        <button class="btn-small" onclick="downloadImage()">Download</button>
-        <button class="btn-small" onclick="shareImage()">Share</button>
-    </div>
-</div>
+                <div id="imgPlaceholder" class="placeholder-box">Your art will appear here</div>
+                <div class="loader" id="imgLoader"></div>
+                <p class="error-msg" id="errorMsg"></p>
+                <div class="image-container" id="imgContainer">
+                    <img id="generatedImage" src="" alt="Generated">
+                </div>
+                <div class="action-buttons" id="imgActions">
+                    <button class="btn-small" onclick="downloadImage()">⬇️ Download</button>
+                    <button class="btn-small" onclick="shareImage()">🔗 Share</button>
+                    <button class="btn-small" onclick="regenerate()">🔄 Regenerate</button>
+                </div>
+            </div>
+            
+            <!-- Gallery -->
             <div class="gallery-section" id="gallerySection">
-                <div style="color:var(--text-sec); font-weight:600; margin-bottom:10px;">Recent</div>
+                <h3>Recent</h3>
                 <div class="gallery-grid" id="galleryGrid"></div>
             </div>
         </div>
-
-        <!-- CHAT TAB -->
-        <div id="tab-chat" class="tab-content">
-            <h1>AI Chat</h1>
-            <p class="subtitle">Powered by Llama 3</p>
-            <div class="chat-container" id="chatBox"><div class="message ai">Hello! How can I help?</div></div>
-            <div class="chat-input-area">
-                <input type="text" id="chatInput" class="chat-input" placeholder="Type..." onkeypress="if(event.key==='Enter') sendChat()">
-                <button class="send-btn" onclick="sendChat()">➤</button>
-            </div>
-        </div>
     </div>
-    <div id="toast">✅ Copied!</div>
 
-    <!-- PERBAIKAN 3: Tambahkan '/' di depan src -->
-    <script src="/js/script-ai.js"></script>
+    <!-- Toast -->
+    <div id="toast">✅ Done!</div>
+
+    <!-- Scripts -->
+    <script src="js/script-ai.js"></script>
 </body>
 </html>
