@@ -1,60 +1,52 @@
 // File: api/generate-image.js
-// Vercel Edge Function - Proxy ke Pollinations API
+// Vercel Node.js Serverless Function - Compatible & Stable
 
-export const config = {
-  runtime: 'edge',
-};
+// Tidak pakai export config runtime: 'edge'
+// Biarkan Vercel pakai default Node.js runtime
 
-export default async function handler(req) {
-  // Hanya terima GET request
+export default async function handler(req, res) {
+  // Hanya terima GET
   if (req.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
-
-  const url = new URL(req.url);
-  const prompt = url.searchParams.get('prompt');
-  const width = parseInt(url.searchParams.get('width')) || 1024;
-  const height = parseInt(url.searchParams.get('height')) || 1024;
-  const model = url.searchParams.get('model') || 'flux';
-  const seed = url.searchParams.get('seed') || Math.floor(Math.random() * 1000000);
-  const userKey = url.searchParams.get('user_key');
-
-  // Validasi prompt
-  if (!prompt || prompt.trim() === '') {
-    return new Response(JSON.stringify({ error: 'Prompt required' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Pilih API Key: User (BYOP) atau Server (Free Tier)
-  const apiKey = userKey?.startsWith('pk_') ? userKey : process.env.POLLINATIONS_KEY;
-
-  if (!apiKey) {
-    console.error('POLLINATIONS_KEY not configured');
-    return new Response(JSON.stringify({ error: 'Server configuration error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Build URL ke Pollinations
-  const params = new URLSearchParams({
-    width: width.toString(),
-    height: height.toString(),
-    seed: seed.toString(),
-    model: model,
-    nologo: 'true',
-    enhance: 'true',
-    key: apiKey,
-  });
-
-  const pollinationsUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt.trim())}?${params.toString()}`;
 
   try {
+    const { prompt, width, height, model, seed, user_key } = req.query;
+
+    // Validasi prompt
+    if (!prompt || prompt.trim() === '') {
+      return res.status(400).json({ error: 'Prompt required' });
+    }
+
+    // Parse integer params
+    const w = parseInt(width) || 1024;
+    const h = parseInt(height) || 1024;
+    const s = seed || Math.floor(Math.random() * 1000000);
+    const m = model || 'flux';
+
+    // Pilih API Key: User (BYOP) atau Server (Free Tier)
+    const apiKey = user_key?.startsWith('pk_') ? user_key : process.env.POLLINATIONS_KEY;
+
+    if (!apiKey) {
+      console.error('POLLINATIONS_KEY not configured in environment');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
+    // Build URL ke Pollinations
+    const params = new URLSearchParams({
+      width: w.toString(),
+      height: h.toString(),
+      seed: s.toString(),
+      model: m,
+      nologo: 'true',
+      enhance: 'true',
+      key: apiKey,
+    });
+
+    const pollinationsUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt.trim())}?${params.toString()}`;
+    console.log('Proxying to:', pollinationsUrl);
+
+    // Forward request ke Pollinations
     const response = await fetch(pollinationsUrl, {
       method: 'GET',
       headers: {},
@@ -63,47 +55,32 @@ export default async function handler(req) {
     if (!response.ok) {
       const errText = await response.text().catch(() => '');
       console.error(`Pollinations error ${response.status}:`, errText);
-      
+
       if (response.status === 401) {
-        return new Response(JSON.stringify({ error: 'Invalid API key' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return res.status(401).json({ error: 'Invalid API key' });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'Pollen balance low' }), {
-          status: 402,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return res.status(402).json({ error: 'Pollen balance low' });
       }
-      
-      return new Response(JSON.stringify({ 
+
+      return res.status(502).json({
         error: `Generation failed: ${response.status}`,
-        details: errText.slice(0, 200)
-      }), {
-        status: 502,
-        headers: { 'Content-Type': 'application/json' },
+        details: errText.slice(0, 200),
       });
     }
 
-    // Ambil image blob
-    const imageBuffer = await response.arrayBuffer();
+    // Ambil buffer gambar
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
     const contentType = response.headers.get('content-type') || 'image/png';
 
-    // Return langsung ke client
-    return new Response(imageBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=3600',
-      },
-    });
+    // Set headers & kirim binary langsung
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.status(200).send(buffer);
 
   } catch (error) {
-    console.error('Proxy error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error('Handler error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
