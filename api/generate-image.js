@@ -1,11 +1,8 @@
 // File: api/generate-image.js
-// Vercel Node.js Serverless Function - Compatible & Stable
-
-// Tidak pakai export config runtime: 'edge'
-// Biarkan Vercel pakai default Node.js runtime
+// Vercel Node.js Serverless Function - Pollinations Proxy
 
 export default async function handler(req, res) {
-  // Hanya terima GET
+  // Hanya terima GET request
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -18,7 +15,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt required' });
     }
 
-    // Parse integer params
+    // Parse parameters
     const w = parseInt(width) || 1024;
     const h = parseInt(height) || 1024;
     const s = seed || Math.floor(Math.random() * 1000000);
@@ -28,7 +25,7 @@ export default async function handler(req, res) {
     const apiKey = user_key?.startsWith('pk_') ? user_key : process.env.POLLINATIONS_KEY;
 
     if (!apiKey) {
-      console.error('POLLINATIONS_KEY not configured in environment');
+      console.error('POLLINATIONS_KEY not configured');
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
@@ -39,17 +36,16 @@ export default async function handler(req, res) {
       seed: s.toString(),
       model: m,
       nologo: 'true',
-      enhance: 'true',
+      enhance: 'false',
       key: apiKey,
     });
 
     const pollinationsUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt.trim())}?${params.toString()}`;
-    console.log('Proxying to:', pollinationsUrl);
 
     // Forward request ke Pollinations
     const response = await fetch(pollinationsUrl, {
       method: 'GET',
-      headers: {},
+      headers: { 'Accept': 'image/*' },
     });
 
     if (!response.ok) {
@@ -62,6 +58,9 @@ export default async function handler(req, res) {
       if (response.status === 402) {
         return res.status(402).json({ error: 'Pollen balance low' });
       }
+      if (response.status === 400) {
+        return res.status(400).json({ error: 'Invalid parameters' });
+      }
 
       return res.status(502).json({
         error: `Generation failed: ${response.status}`,
@@ -69,12 +68,11 @@ export default async function handler(req, res) {
       });
     }
 
-    // Ambil buffer gambar
+    // Ambil buffer gambar dan kirim ke client
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const contentType = response.headers.get('content-type') || 'image/png';
 
-    // Set headers & kirim binary langsung
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.status(200).send(buffer);
