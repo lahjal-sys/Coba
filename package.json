@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "vercel build",
-    "deploy": "vercel --prod"
+    "dev": "echo 'Use vercel dev locally'",
+    "build": "echo 'No build step needed - Vercel auto-detects static + API'",
+    "start": "echo 'Deployed on Vercel'"
   },
   "engines": {
-    "node": "24.x"
+    "node": "22.x"
   }
 }
