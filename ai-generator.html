@@ -1,101 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Generator - Ai Trends</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style-ai.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Generator - Ai Trends</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style-ai.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav>
-        <div class="nav-left">
-            <a href="index.html" class="logo">⚡ Ai Trends</a>
-        </div>
-        <div class="nav-right">
-            <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
-            <div class="hamburger" onclick="toggleMenu()">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Dropdown Menu -->
-    <div class="dropdown-menu" id="dropdownMenu">
-        <a class="menu-item" href="index.html" onclick="toggleMenu()">Home 🏠</a>
-        <a class="menu-item" href="ai-generator.html" onclick="toggleMenu()" style="color:var(--primary)">AI Studio 🤖</a>
-        <div style="padding:15px 10px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-            <span style="color:var(--text); font-weight:600;">Language</span>
-            <select id="langSelect" class="lang-select" onchange="changeLanguage()">
-                <option value="en">🇺🇸 EN</option>
-                <option value="id">🇮🇩 ID</option>
-                <option value="es">🇪🇸 ES</option>
-                <option value="jp">🇯🇵 JP</option>
-            </select>
+  <!-- NAVBAR -->
+  <nav>
+    <div class="nav-left">
+      <a href="index.html" class="logo">⚡ Ai Trends</a>
+    </div>
+    <div class="nav-right">
+      <a href="index.html" class="nav-link">Home</a>
+      
+      <div class="nav-dropdown">
+        <button class="nav-link">Video ▾</button>
+        <div class="dropdown-content">
+          <a href="https://youtube.com/@AiTrendsonly" target="_blank">🎬 YouTube</a>
+          <a href="https://tiktok.com/@AiTrendsonly" target="_blank">🎵 TikTok</a>
+          <a href="https://instagram.com/AiTrendsonly" target="_blank">📸 Instagram</a>
         </div>
+      </div>
+      
+      <div class="nav-dropdown">
+        <button class="nav-link">AI Generator ▾</button>
+        <div class="dropdown-content">
+          <a href="ai-generator.html?tab=image" class="nav-link">🎨 Image</a>
+          <a href="ai-generator.html?tab=chat" class="nav-link">💬 Chat</a>
+          <a href="ai-generator.html?tab=voice" class="nav-link">🎤 Voice</a>
+          <a href="ai-generator.html?tab=video" class="nav-link">🎥 Video</a>
+        </div>
+      </div>
+      
+      <div class="nav-dropdown">
+        <button class="nav-link">Favorite <span id="favBadge"></span> ▾</button>
+        <div class="dropdown-content">
+          <a href="#" onclick="openFavorites(); return false;">🤖 AI Images</a>
+          <a href="#" onclick="showToast('Video favorites coming soon!', true); return false;">🎥 Videos</a>
+        </div>
+      </div>
+      
+      <a href="https://enter.pollinations.ai" target="_blank" class="nav-link">🔗 Pollinations</a>
+      
+      <select id="langSelect" class="lang-select" onchange="changeLanguage()">
+        <option value="en">🇺🇸</option>
+        <option value="id">🇮🇩</option>
+        <option value="es">🇪🇸</option>
+        <option value="jp">🇯🇵</option>
+      </select>
+      
+      <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+      
+      <div class="hamburger" onclick="toggleMenu()">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MOBILE DROPDOWN -->
+  <div class="dropdown-menu" id="dropdownMenu">
+    <a class="menu-item" href="index.html">Home 🏠</a>
+    <a class="menu-item" href="ai-generator.html?tab=image">🎨 Image</a>
+    <a class="menu-item" href="ai-generator.html?tab=chat">💬 Chat</a>
+    <a class="menu-item" href="#" onclick="openFavorites(); return false;">🤖 Favorites</a>
+    <a class="menu-item" href="https://enter.pollinations.ai" target="_blank">🔗 Pollinations</a>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="container">
+    
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="image" onclick="switchTab('image')">🎨 Image</button>
+      <button class="tab-btn" data-tab="chat" onclick="switchTab('chat')">💬 Chat</button>
     </div>
 
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('image')">🎨 Image</button>
+    <!-- IMAGE TAB -->
+    <div id="tab-image" class="tab-content active">
+      <h1>AI Image Generator</h1>
+      <p class="subtitle">Powered by Pollinations AI</p>
+      
+      <!-- Pollen Display -->
+      <div id="pollenDisplay">🌸 Pollen Left: 1.000 / 1.000</div>
+      
+      <!-- Model Selector -->
+      <div id="modelSelector">
+        <button class="model-btn active" data-model="flux">FLUX</button>
+        <button class="model-btn" data-model="zimage">Z-Image</button>
+        <button class="model-btn" data-model="gptimage">GPT Image</button>
+        <button class="model-btn" data-model="klein">Klein</button>
+        <button class="model-btn" data-model="klein-large">Klein Large</button>
+        <button class="model-btn" data-model="imagen-4">Imagen 4</button>
+        <button class="model-btn" data-model="grok-imagine">Grok</button>
+      </div>
+      
+      <!-- Prompt Input -->
+      <textarea id="imgPrompt" class="prompt-area" placeholder="Describe your image..."></textarea>
+      
+      <!-- Tools -->
+      <div class="tools-row">
+        <div style="display:flex; gap:8px;">
+          <button class="random-btn" onclick="fillRandomPrompt()">🎲 Random</button>
+          <button class="random-btn" onclick="autoRenderPrompt()">✨ Auto-Render</button>
         </div>
-
-        <!-- Image Tab -->
-        <div id="tab-image" class="tab-content active">
-            <h1>AI Image Generator</h1>
-            <p class="subtitle">Powered by Pollinations AI • Model: Flux</p>
-            
-            <!-- Free Tier Display -->
-            <div id="freeTierDisplay"></div>
-            
-            <!-- Prompt -->
-            <textarea id="imgPrompt" class="prompt-area" placeholder="A cyberpunk cat..."></textarea>
-            
-            <!-- Tools -->
-            <div class="tools-row">
-                <button class="random-btn" onclick="fillRandomPrompt()">🎲 Random</button>
-                <div class="ratio-row" style="display:flex; gap:5px;">
-                    <button class="ratio-btn active" onclick="setRatio(1024,1024,this)">1:1</button>
-                    <button class="ratio-btn" onclick="setRatio(768,1344,this)">9:16</button>
-                    <button class="ratio-btn" onclick="setRatio(1344,768,this)">16:9</button>
-                </div>
-            </div>
-            
-            <!-- Generate Button -->
-            <button class="action-btn-main" id="genImgBtn" onclick="generateImage()">✨ Generate</button>
-            
-            <!-- Result -->
-            <div class="result-area">
-                <div id="imgPlaceholder" class="placeholder-box">Your art will appear here</div>
-                <div class="loader" id="imgLoader"></div>
-                <p class="error-msg" id="errorMsg"></p>
-                <div class="image-container" id="imgContainer">
-                    <img id="generatedImage" src="" alt="Generated">
-                </div>
-                <div class="action-buttons" id="imgActions">
-                    <button class="btn-small" onclick="downloadImage()">⬇️ Download</button>
-                    <button class="btn-small" onclick="shareImage()">🔗 Share</button>
-                    <button class="btn-small" onclick="regenerate()">🔄 Regenerate</button>
-                </div>
-            </div>
-            
-            <!-- Gallery -->
-            <div class="gallery-section" id="gallerySection">
-                <h3>Recent</h3>
-                <div class="gallery-grid" id="galleryGrid"></div>
-            </div>
+        <div style="display:flex; gap:5px; flex-wrap:wrap;">
+          <button class="ratio-btn" data-w="1024" data-h="1024">1:1</button>
+          <button class="ratio-btn" data-w="768" data-h="1024">3:4</button>
+          <button class="ratio-btn" data-w="1024" data-h="768">4:3</button>
+          <button class="ratio-btn active" data-w="768" data-h="1344">9:16</button>
+          <button class="ratio-btn" data-w="1344" data-h="768">16:9</button>
         </div>
+      </div>
+      
+      <!-- Generate Button -->
+      <button class="action-btn-main" id="genImgBtn" onclick="generateImage()">✨ Generate</button>
+      
+      <!-- Result Area -->
+      <div class="result-area">
+        <div id="imgPlaceholder" class="placeholder-box">Your art will appear here</div>
+        <div class="loader" id="imgLoader"></div>
+        <p class="error-msg" id="errorMsg"></p>
+        
+        <div class="image-container" id="imgContainer">
+          <img id="generatedImage" src="" alt="Generated">
+        </div>
+        
+        <div class="action-buttons" id="imgActions">
+          <button class="btn-small" onclick="downloadImage()">⬇️ Download</button>
+          <button class="btn-small" onclick="shareImage()">🔗 Share</button>
+          <button class="btn-small" onclick="regenerate()">🔄 Regenerate</button>
+        </div>
+      </div>
+      
     </div>
 
-    <!-- Toast -->
-    <div id="toast">✅ Done!</div>
+    <!-- CHAT TAB (Placeholder) -->
+    <div id="tab-chat" class="tab-content">
+      <h1>AI Chat</h1>
+      <p class="subtitle">Coming soon! 🔜</p>
+      <div class="placeholder-box" style="margin-top:20px;">
+        Chat feature will be available in the next update.
+        <br><br>
+        <button class="btn-small" onclick="switchTab('image')">← Back to Image</button>
+      </div>
+    </div>
 
-    <!-- Scripts -->
-    <script src="js/script-ai.js"></script>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast">✅ Done!</div>
+
+  <!-- SCRIPTS -->
+  <script src="js/script-ai.js"></script>
+  
 </body>
 </html>
